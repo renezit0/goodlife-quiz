@@ -17,7 +17,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 .gs-gear svg { width: 24px; height: 24px; }
-.gs-gear:hover, .gs-gear:focus-visible { opacity: .95; background: #ffffff1f; rotate: 60deg; }
+.gs-gear:focus-visible, .gs-gear:active { opacity: .95; background: #ffffff1f; rotate: 60deg; }
 .gs-gear:focus-visible { outline: 3px solid #a9e7ff; outline-offset: 2px; }
 
 .gs-overlay {

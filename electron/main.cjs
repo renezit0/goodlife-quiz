@@ -148,7 +148,12 @@ function createQuizWindow(index, count) {
   win.setMenu(null)
   const contentsId = win.webContents.id
   win.on('closed', () => activeScreens.delete(contentsId))
-  win.webContents.on('did-finish-load', () => win.webContents.setZoomFactor(config.escala / 100))
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.setZoomFactor(config.escala / 100)
+    // Tela touch: sem pinça para dar zoom e, no app instalado, sem cursor do mouse.
+    win.webContents.setVisualZoomLevelLimits(1, 1)
+    if (app.isPackaged) win.webContents.insertCSS('*, *::before, *::after { cursor: none !important; }')
+  })
 
   const screenParam = { tela: String(index + 1) }
   if (DEV_SERVER_URL) win.loadURL(`${DEV_SERVER_URL}?${new URLSearchParams(screenParam)}`)
