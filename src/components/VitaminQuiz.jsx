@@ -178,9 +178,9 @@ export default function VitaminQuiz({ questions, products, recommend, onComplete
     else setStep((value) => Math.max(0, value - 1))
   }, -1)
 
+  // "Fazer nova pesquisa" e "Recomeçar": reinício completo, de volta à tela inicial.
   const reset = () => transitionTo(() => {
-    newSession()
-    setStarted(true)
+    setStarted(false)
     setPessoa(null)
     setPrintState(null)
     setStep(0)
