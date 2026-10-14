@@ -5,7 +5,8 @@
 //           catálogo local (goodlife-callfarma.json).
 // beneficios  quanto o produto atende cada necessidade (0 a 5), usado pela recomendação:
 //   energia, imunidade, sono, beleza, ossos, mente (memória, foco, coração e cérebro),
-//   estresse, respiratorio, base (nutrição diária), muscular, visao.
+//   estresse, respiratorio (catarro), garganta, base (nutrição diária), muscular, articulacoes,
+//   visao, sol (vitamina D), memoria, coracao, pele.
 // publico   'mulher' | '50+' | 'adulto' (padrão).
 // papel     'principal' pode ser a sugestão de destaque; 'complemento' (pomada, pastilha,
 //           xarope) só entra nas 2 sugestões extras.
@@ -25,7 +26,7 @@ export const produtosDoEvento = [
   },
   {
     code: '58750', qtde: 24,
-    beneficios: { muscular: 5, ossos: 1 }, papel: 'complemento',
+    beneficios: { muscular: 5, articulacoes: 2 }, papel: 'complemento',
     destaques: ['pomada para massagear músculos cansados', 'boa aliada depois do treino'],
   },
   {
@@ -40,22 +41,22 @@ export const produtosDoEvento = [
   },
   {
     code: '64085', qtde: 48,
-    beneficios: { beleza: 5 },
+    beneficios: { beleza: 5, pele: 2 },
     destaques: ['nutrientes para cabelo, unhas e pele', 'cuidado de dentro para fora'],
   },
   {
     code: '64535', qtde: 36,
-    beneficios: { respiratorio: 3, imunidade: 2 }, papel: 'complemento',
+    beneficios: { garganta: 5, respiratorio: 1, imunidade: 1 }, papel: 'complemento',
     destaques: ['pastilhas de gengibre, mel e laranja', 'alívio para a garganta no dia a dia'],
   },
   {
     code: '58286', qtde: 24,
-    beneficios: { ossos: 4, muscular: 3 },
+    beneficios: { articulacoes: 5, ossos: 3, muscular: 2 },
     destaques: ['colágeno tipo 2 com magnésio, D3 e K2', 'cuidado com as articulações'],
   },
   {
     code: '64086', qtde: 24,
-    beneficios: { energia: 4, estresse: 2, mente: 2, base: 1 },
+    beneficios: { energia: 4, estresse: 2, memoria: 2, mente: 1, base: 1 },
     destaques: ['vitaminas do complexo B', 'apoio ao metabolismo energético'],
   },
   {
@@ -70,7 +71,7 @@ export const produtosDoEvento = [
   },
   {
     code: '61543', qtde: 24,
-    beneficios: { mente: 5, estresse: 2, energia: 1 },
+    beneficios: { memoria: 5, mente: 4, estresse: 2, energia: 1 },
     destaques: ['magnésio com foco em memória e concentração', 'para a rotina de muita cabeça'],
   },
   {
@@ -95,12 +96,12 @@ export const produtosDoEvento = [
   },
   {
     code: '63753', qtde: 24,
-    beneficios: { mente: 5, base: 1 },
+    beneficios: { coracao: 5, mente: 4, base: 1 },
     destaques: ['ômega 3 com EPA e DHA', 'cuidado com coração e cérebro'],
   },
   {
     code: '58287', qtde: 24,
-    beneficios: { ossos: 5, imunidade: 1 },
+    beneficios: { ossos: 5, sol: 3, imunidade: 1 },
     destaques: ['zinco, magnésio, D3 e K2 juntos', 'base para ossos fortes'],
   },
   {
@@ -110,17 +111,17 @@ export const produtosDoEvento = [
   },
   {
     code: '20148', qtde: 24,
-    beneficios: { imunidade: 4, beleza: 2, respiratorio: 1 },
+    beneficios: { imunidade: 4, beleza: 2, pele: 3, respiratorio: 1 },
     destaques: ['vitamina C com zinco', 'reforço clássico para a imunidade'],
   },
   {
     code: '18070', qtde: 24,
-    beneficios: { imunidade: 3, ossos: 3, base: 1 },
+    beneficios: { sol: 5, imunidade: 3, ossos: 3, base: 1 },
     destaques: ['vitamina D3 2000 UI', 'imunidade e ossos, para quem toma pouco sol'],
   },
   {
     code: '5198', qtde: 24, nome: 'GOODLIFE VITAMINA D3+K2 60CPR MASTIGAVEL',
-    beneficios: { ossos: 4, imunidade: 2, base: 1 },
+    beneficios: { sol: 4, ossos: 4, imunidade: 2, base: 1 },
     destaques: ['vitamina D3 com K2 mastigável', 'prática, sem precisar de água'],
   },
 ]

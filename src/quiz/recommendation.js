@@ -1,6 +1,7 @@
 // Perguntas, catálogo e regra de recomendação — extraídos do site (goodlife-site/src/App.jsx).
 import callfarmaCatalog from './goodlife-callfarma.json'
 import { produtosDoEvento } from './evento'
+import { quizQuestions, resolveQuestions } from './perguntas'
 import goodlifeLogo from '../assets/logo-good-fim.png'
 
 const imageModules = import.meta.glob('../assets/produtos/*.{png,jpg,jpeg,webp,avif,svg}', {
@@ -60,92 +61,7 @@ const profileRules = [
   },
 ]
 
-export const quizQuestions = [
-  {
-    id: 'symptom',
-    eyebrow: 'Etapa 1',
-    title: 'Qual desses sintomas mais te incomoda?',
-    highlight: 'sintomas',
-    subtitle: 'Toque no ponto que mais pesa na sua rotina hoje.',
-    options: [
-      { id: 'fatigue', label: 'Cansaço e energia', description: 'Mais disposição física e mental para render no dia.', scores: { energia: 4, multivitaminico: 1 } },
-      { id: 'immunity', label: 'Imunidade baixa', description: 'Defesa mais consistente para a rotina corrida.', scores: { imunidade: 4, multivitaminico: 1 } },
-      { id: 'sleep', label: 'Sono ruim', description: 'Dormir melhor e recuperar mais durante a noite.', scores: { sono: 4, energia: 1 } },
-      { id: 'food', label: 'Alimentação ruim', description: 'Base nutricional para cobrir uma rotina mais irregular.', scores: { multivitaminico: 4, imunidade: 1 } },
-      { id: 'beauty', label: 'Queda de cabelo ou unhas fracas', description: 'Suporte para beleza, força e vitalidade de dentro para fora.', scores: { beleza: 5 } },
-    ],
-  },
-  {
-    id: 'age',
-    eyebrow: 'Etapa 2',
-    title: 'Qual a sua faixa de idade?',
-    subtitle: 'A fase da vida ajuda a priorizar energia, manutenção óssea, cognição e recuperação.',
-    options: [
-      { id: '18-29', label: '18 a 29 anos', description: 'Rotina mais intensa, foco em energia e base nutricional.', scores: { multivitaminico: 2, energia: 2 } },
-      { id: '30-44', label: '30 a 44 anos', description: 'Equilíbrio entre rendimento, imunidade e constância.', scores: { multivitaminico: 2, imunidade: 1, energia: 1 } },
-      { id: '45-59', label: '45 a 59 anos', description: 'Mais atenção para articulações, cognição e metabolismo.', scores: { ossos: 2, energia: 1, omega3: 1 } },
-      { id: '60+', label: '60+ anos', description: 'Base de suporte diário para ossos, vitalidade e cérebro.', scores: { ossos: 3, omega3: 2, multivitaminico: 1 } },
-    ],
-  },
-  {
-    id: 'gender',
-    eyebrow: 'Etapa 3',
-    title: 'Qual opção combina mais com você?',
-    subtitle: 'Assim o quiz consegue priorizar versões femininas ou masculinas quando esse produto existir.',
-    options: [
-      { id: 'female', label: 'Mulher', description: 'Prioriza fórmulas direcionadas ao público feminino quando fizer sentido.', scores: { beleza: 1, multivitaminico: 1 } },
-      { id: 'male', label: 'Homem', description: 'Prioriza fórmulas direcionadas ao público masculino quando fizer sentido.', scores: { energia: 1, multivitaminico: 1 } },
-    ],
-  },
-  {
-    id: 'goal',
-    eyebrow: 'Etapa 4',
-    title: 'O que você mais quer melhorar agora?',
-    subtitle: 'Escolha o objetivo principal para a recomendação ficar mais cirúrgica.',
-    options: [
-      { id: 'energia', label: 'Energia e disposição', description: 'Mais rendimento físico e mental durante o dia.', scores: { energia: 3, multivitaminico: 1 } },
-      { id: 'imunidade', label: 'Imunidade', description: 'Defesa mais consistente para a rotina corrida.', scores: { imunidade: 3, multivitaminico: 1 } },
-      { id: 'sono', label: 'Sono e relaxamento', description: 'Dormir melhor e acordar mais recuperado.', scores: { sono: 4 } },
-      { id: 'beleza', label: 'Pele, cabelo e unhas', description: 'Apoio de dentro para fora para estética e vitalidade.', scores: { beleza: 4 } },
-      { id: 'ossos', label: 'Ossos e articulações', description: 'Mais estrutura, mobilidade e manutenção do corpo.', scores: { ossos: 4 } },
-      { id: 'mente', label: 'Coração e cérebro', description: 'Clareza mental, memória e cuidado de longo prazo.', scores: { omega3: 4 } },
-    ],
-  },
-  {
-    id: 'activity',
-    eyebrow: 'Etapa 5',
-    title: 'Como está seu nível de atividade física?',
-    subtitle: 'Treino e movimento mudam bastante a necessidade de recuperação e suporte diário.',
-    options: [
-      { id: 'sedentary', label: 'Baixo', description: 'Pouco treino ou rotina mais parada.', scores: { multivitaminico: 2, omega3: 1 } },
-      { id: 'moderate', label: 'Moderado', description: 'Caminhadas, academia ou esporte algumas vezes por semana.', scores: { energia: 2, ossos: 1, multivitaminico: 1 } },
-      { id: 'high', label: 'Alto', description: 'Treinos frequentes, esforço intenso e recuperação importante.', scores: { energia: 3, ossos: 2 } },
-    ],
-  },
-  {
-    id: 'routine',
-    eyebrow: 'Etapa 6',
-    title: 'Qual frase combina mais com a sua rotina?',
-    subtitle: 'Isso ajuda a entender se você precisa mais de base nutricional, foco ou desaceleração.',
-    options: [
-      { id: 'rush', label: 'Dia corrido e alimentação irregular', description: 'Base diária e constância nutricional fazem diferença.', scores: { multivitaminico: 3, imunidade: 1 } },
-      { id: 'stress', label: 'Muito estresse e cansaço mental', description: 'Foco, recuperação e desaceleração entram no radar.', scores: { energia: 2, sono: 2, omega3: 1 } },
-      { id: 'seasonal', label: 'Costumo ficar mais vulnerável a gripes', description: 'Reforço de defesa costuma ser a prioridade.', scores: { imunidade: 4 } },
-      { id: 'aesthetic', label: 'Quero me sentir melhor na aparência', description: 'Nutrição funcional com foco em beleza e vitalidade.', scores: { beleza: 3, multivitaminico: 1 } },
-    ],
-  },
-  {
-    id: 'sleep',
-    eyebrow: 'Etapa 7',
-    title: 'Como anda seu sono?',
-    subtitle: 'Sono ruim muda energia, imunidade, recuperação e percepção de bem-estar.',
-    options: [
-      { id: 'good', label: 'Durmo bem', description: 'Ótimo, o foco pode ir para outro objetivo principal.', scores: { energia: 1, multivitaminico: 1 } },
-      { id: 'irregular', label: 'Oscila bastante', description: 'Vale olhar para relaxamento e recuperação.', scores: { sono: 2, energia: 1 } },
-      { id: 'poor', label: 'Durmo mal com frequência', description: 'A qualidade do sono provavelmente é prioridade.', scores: { sono: 4 } },
-    ],
-  },
-]
+export { quizQuestions, resolveQuestions }
 
 const normalize = (value) =>
   value
@@ -279,6 +195,33 @@ const needsByAnswer = {
     ossos: { ossos: 4, muscular: 1.5 },
     mente: { mente: 5 },
   },
+  // Pergunta adaptativa (depende do objetivo): afina a necessidade principal.
+  focus: {
+    'energia-acordar': { energia: 2, sono: 2 },
+    'energia-tarde': { energia: 2, base: 2 },
+    'energia-dia': { energia: 3, base: 1 },
+    'energia-treino': { energia: 1, muscular: 3 },
+    'imun-gripes': { imunidade: 3 },
+    'imun-garganta': { garganta: 4, imunidade: 1 },
+    'imun-catarro': { respiratorio: 4 },
+    'imun-sol': { sol: 4, imunidade: 1 },
+    'sono-pegar': { sono: 3 },
+    'sono-acordo': { sono: 1, estresse: 2 },
+    'sono-cabeca': { estresse: 3, sono: 1 },
+    'sono-horario': { sono: 3 },
+    'beleza-cabelo': { beleza: 3 },
+    'beleza-unhas': { beleza: 3 },
+    'beleza-pele': { beleza: 2, pele: 2 },
+    'beleza-tudo': { beleza: 2, base: 1 },
+    'ossos-articulacoes': { articulacoes: 4 },
+    'ossos-prevenir': { ossos: 3 },
+    'ossos-caimbras': { muscular: 4 },
+    'ossos-sol': { sol: 3, ossos: 1 },
+    'mente-memoria': { memoria: 4 },
+    'mente-foco': { memoria: 2, energia: 1, estresse: 1 },
+    'mente-coracao': { coracao: 4 },
+    'mente-olhos': { visao: 4 },
+  },
   activity: {
     sedentary: { base: 1 },
     moderate: { muscular: 1, energia: 1 },
@@ -286,7 +229,8 @@ const needsByAnswer = {
   },
   routine: {
     rush: { base: 3, energia: 1 },
-    stress: { estresse: 3, mente: 1, sono: 1, visao: 1 },
+    stress: { estresse: 3, mente: 1, sono: 1 },
+    screens: { visao: 3, memoria: 1 },
     seasonal: { imunidade: 3, respiratorio: 3 },
     aesthetic: { beleza: 3 },
   },
@@ -309,6 +253,12 @@ const needProfiles = {
   base: { title: 'Base nutricional diária', focus: 'garantir uma base de vitaminas todo dia' },
   muscular: { title: 'Músculos e recuperação', focus: 'recuperar o corpo do esforço' },
   visao: { title: 'Visão e telas', focus: 'cuidar dos olhos' },
+  sol: { title: 'Vitamina D e sol', focus: 'repor a vitamina D de quem pega pouco sol' },
+  garganta: { title: 'Garganta', focus: 'aliviar a garganta' },
+  articulacoes: { title: 'Articulações', focus: 'cuidar das articulações' },
+  memoria: { title: 'Memória e foco', focus: 'cuidar da memória e do foco' },
+  coracao: { title: 'Coração', focus: 'cuidar do coração' },
+  pele: { title: 'Pele', focus: 'cuidar da pele' },
 }
 
 const ageAtLeast45 = (answers) => answers.age === '45-59' || answers.age === '60+'
@@ -369,6 +319,12 @@ function reasonFor(scored, answers, questions) {
   const behind = strongNeeds.flatMap(([need]) => answersBehind(need, answers, questions))
   const strong = behind.filter(({ weight }) => weight >= 2)
   const labels = []
+  // A resposta da pergunta de detalhe vem primeiro quando o produto atende a ela de verdade.
+  const focusQuestion = questions.find((q) => q.id === 'focus')
+  const focusOption = focusQuestion?.options.find((o) => o.id === answers.focus)
+  const focusNeed = Object.entries(needsByAnswer.focus[answers.focus] || {}).sort((a, b) => b[1] - a[1])[0]?.[0]
+  const ledByFocus = Boolean(focusOption) && (scored.product.beneficios?.[focusNeed] || 0) >= 3
+  if (ledByFocus) labels.push(focusOption.label)
   for (const { label } of strong.length ? strong : behind) {
     if (!labels.includes(label) && labels.length < 2) labels.push(label)
   }
@@ -377,9 +333,10 @@ function reasonFor(scored, answers, questions) {
   if (scored.product.publico === '50+' && !labels.includes(ageLabel)) labels.push(ageLabel)
   const quoted = labels.filter(Boolean).slice(0, 3).map((label) => `“${label}”`)
   const joined = quoted.length > 1 ? `${quoted.slice(0, -1).join(', ')} e ${quoted.at(-1)}` : quoted[0]
+  const headNeed = ledByFocus ? focusNeed : mainNeed
   return {
-    need: mainNeed,
-    text: joined ? `Você marcou ${joined}: ajuda a ${needProfiles[mainNeed]?.focus || 'cuidar da sua rotina'}.` : `Ajuda a ${needProfiles[mainNeed]?.focus || 'cuidar da sua rotina'}.`,
+    need: headNeed,
+    text: joined ? `Você marcou ${joined}: ajuda a ${needProfiles[headNeed]?.focus || 'cuidar da sua rotina'}.` : `Ajuda a ${needProfiles[headNeed]?.focus || 'cuidar da sua rotina'}.`,
   }
 }
 
@@ -392,9 +349,14 @@ export const getQuizRecommendation = (products, answers) => {
 
   // A principal respeita o objetivo que a pessoa escolheu ("O que você quer cuidar primeiro?"):
   // só entram produtos fortes nesse objetivo (nota 3+ na ficha), se houver algum.
-  const goalNeed = Object.entries(needsByAnswer.goal[answers.goal] || {}).sort((a, b) => b[1] - a[1])[0]?.[0]
+  // O detalhe da pergunta adaptativa (ex.: "Olhos cansados de tela") tem prioridade sobre o
+  // objetivo geral ("Coração e cérebro").
+  const topOf = (map) => Object.entries(map || {}).sort((a, b) => b[1] - a[1])[0]?.[0]
+  const focusNeed = topOf(needsByAnswer.focus[answers.focus])
+  const goalNeed = topOf(needsByAnswer.goal[answers.goal])
   const eligible = scoreAll(needs).filter(({ product }) => product.papel !== 'complemento')
-  const first = eligible.find(({ product }) => (product.beneficios?.[goalNeed] || 0) >= 3) || eligible[0]
+  const strongIn = (need) => need && eligible.find(({ product }) => (product.beneficios?.[need] || 0) >= 3)
+  const first = strongIn(focusNeed) || strongIn(goalNeed) || eligible[0]
   const picked = first ? [first] : []
 
   // O que já foi coberto pesa menos: as extras vão para as outras necessidades da pessoa.
@@ -417,7 +379,7 @@ export const getQuizRecommendation = (products, answers) => {
     cover(next.product)
   }
 
-  const [main, ...extras] = picked.map((scored) => ({ ...scored.product, reason: reasonFor(scored, answers, quizQuestions) }))
+  const [main, ...extras] = picked.map((scored) => ({ ...scored.product, reason: reasonFor(scored, answers, resolveQuestions(answers)) }))
   const topNeed = Object.entries(needs).sort((a, b) => b[1] - a[1])[0]?.[0] || 'base'
   const profileNeed = main?.reason.need || topNeed
 

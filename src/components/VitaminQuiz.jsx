@@ -5,26 +5,6 @@ import goodlifeLogo from '../assets/logo-good-fim.png'
 import MatriculaStep from './MatriculaStep'
 import './VitaminQuiz.css'
 
-const steps = [
-  { label: 'Seu momento', icon: 'heart', title: 'O que mais incomoda você hoje?', hint: 'Vamos começar pelo que você gostaria de cuidar.', note: 'O primeiro passo é ouvir o seu corpo.' },
-  { label: 'Sua idade', icon: 'sun', title: 'Em qual fase da vida você está?', hint: 'Selecione a sua faixa de idade.', note: 'Cada fase tem o seu próprio ritmo.' },
-  { label: 'Seu perfil', icon: 'user', title: 'Qual opção combina com você?', hint: 'Isso ajuda a considerar as versões femininas e masculinas da linha.', note: 'O cuidado também está nos detalhes.' },
-  { label: 'Seu objetivo', icon: 'spark', title: 'O que você quer cuidar primeiro?', hint: 'Escolha o seu principal objetivo neste momento.', note: 'Pequenas escolhas. Novas possibilidades.' },
-  { label: 'Seu movimento', icon: 'activity', title: 'Como é o movimento no seu dia?', hint: 'Pense na sua rotina de atividade física.', note: 'O seu ritmo faz parte dessa escolha.' },
-  { label: 'Sua rotina', icon: 'leaf', title: 'Como tem sido o seu dia a dia?', hint: 'Escolha a frase que mais se aproxima da sua rotina.', note: 'O melhor cuidado cabe na vida real.' },
-  { label: 'Seu descanso', icon: 'moon', title: 'E quando chega a hora de dormir?', hint: 'Última pergunta: como você descreveria o seu sono?', note: 'Descansar também é cuidar de você.' },
-]
-
-const optionIcons = {
-  symptom: ['bolt', 'shield', 'moon', 'leaf', 'spark'],
-  age: ['sun', 'sun', 'sun', 'sun'],
-  gender: ['user', 'user'],
-  goal: ['bolt', 'shield', 'moon', 'spark', 'activity', 'heart'],
-  activity: ['leaf', 'activity', 'bolt'],
-  routine: ['activity', 'moon', 'shield', 'spark'],
-  sleep: ['moon', 'sun', 'moon'],
-}
-
 // Se a janela parar de desenhar (coberta, minimizada), a animação não avança sozinha;
 // o watchdog conclui a animação para o quiz nunca ficar travado esperando por ela.
 function finishWithin(animation, ms) {
@@ -57,7 +37,7 @@ function Icon({ name, className = '' }) {
 
 // lookupPerson: quando informado, o quiz começa pedindo a matrícula do participante.
 // onComplete(answers, sessionId, pessoa) pode devolver uma promessa { ok } da impressão do cupom.
-export default function VitaminQuiz({ questions, products, recommend, onComplete, onActiveChange, lookupPerson, idleResetMs = 0 }) {
+export default function VitaminQuiz({ questions: questionList, resolveQuestions, products, recommend, onComplete, onActiveChange, lookupPerson, idleResetMs = 0 }) {
   const [started, setStarted] = useState(false)
   const [pessoa, setPessoa] = useState(null)
   const [printState, setPrintState] = useState(null) // null | printing | done | failed
@@ -74,9 +54,11 @@ export default function VitaminQuiz({ questions, products, recommend, onComplete
   // Identifica cada rodada do quiz; "Revisar respostas" mantém a mesma sessão.
   const sessionRef = useRef(null)
   const newSession = () => { sessionRef.current = crypto.randomUUID().slice(0, 8) }
+  // Perguntas adaptativas: as opções de uma pergunta podem depender de uma resposta anterior.
+  const questions = useMemo(() => (resolveQuestions ? resolveQuestions(answers, questionList) : questionList), [answers, questionList, resolveQuestions])
   const complete = step === questions.length
   const question = questions[step]
-  const meta = steps[step]
+  const meta = question
   const result = useMemo(() => complete ? recommend(products, answers) : null, [complete, products, answers, recommend])
   const answeredCount = step
   const progress = Math.round(answeredCount / questions.length * 100)
@@ -254,7 +236,7 @@ export default function VitaminQuiz({ questions, products, recommend, onComplete
                 <h1 tabIndex={-1}>{meta.title}</h1>
                 <p className="vq-question-hint">{meta.hint}</p>
                 <div className="vq-options" style={{ '--option-count': question.options.length }} role="group" aria-label={meta.title}>
-                  {question.options.map((option, index) => <button
+                  {question.options.map((option) => <button
                     key={option.id}
                     type="button"
                     className={`vq-option ${pending === option.id ? 'is-selected' : ''} ${answers[question.id] === option.id && !pending ? 'was-selected' : ''}`}
@@ -263,7 +245,7 @@ export default function VitaminQuiz({ questions, products, recommend, onComplete
                     onClick={() => choose(option.id)}
                    
                   >
-                    <span className="vq-option-icon"><Icon name={optionIcons[question.id]?.[index]} /></span>
+                    <span className="vq-option-icon"><Icon name={option.icon} /></span>
                     <span className="vq-option-copy"><strong>{option.label}</strong></span>
                     <span className="vq-option-radio"><Icon name="check" /></span>
                   </button>)}

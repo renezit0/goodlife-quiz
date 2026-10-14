@@ -64,7 +64,7 @@ const useFullscreen = () => !argJanela && config.telaCheia
 
 // ---------- Respostas ----------
 
-const csvHeader = 'data_hora;tela;sessao;matricula;nome;loja;sintoma;idade;perfil;objetivo;atividade;rotina;sono;resultado_perfil;produto;sugestao_2;sugestao_3\n'
+const csvHeader = 'data_hora;tela;sessao;matricula;nome;loja;sintoma;idade;perfil;objetivo;detalhe;atividade;rotina;sono;resultado_perfil;produto;sugestao_2;sugestao_3\n'
 const responsesFile = () =>
   process.env.GOODLIFE_RESPOSTAS || path.join(app.getPath('documents'), 'GoodLife Quiz', 'respostas.csv')
 
@@ -105,6 +105,7 @@ ipcMain.handle('quiz:response', (_event, response) => {
     answers.age,
     answers.gender,
     answers.goal,
+    answers.focus,
     answers.activity,
     answers.routine,
     answers.sleep,

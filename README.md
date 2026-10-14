@@ -135,5 +135,7 @@ não abre outro conjunto de telas.
 - `electron/preload.cjs` — ponte segura entre o quiz e o processo principal.
 - `src/components/VitaminQuiz.jsx` — o quiz (mesmo componente do site, com volta automática).
 - `src/components/SettingsPanel.jsx` — engrenagem, painel de configurações e teclado da senha.
-- `src/quiz/recommendation.js` — perguntas, catálogo e regra de recomendação (iguais ao site).
+- `src/quiz/perguntas.js` — as 8 perguntas; a 5ª muda conforme o objetivo escolhido.
+- `src/quiz/evento.js` — os 22 produtos do evento e a ficha de benefícios de cada um.
+- `src/quiz/recommendation.js` — necessidades por resposta, sugestão principal + 2 complementares e o motivo de cada uma.
 - `src/assets/produtos/` — fotos dos produtos; o nome do arquivo define o produto.

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import VitaminQuiz from './components/VitaminQuiz'
 import SettingsPanel, { GearIcon, RestartIcon } from './components/SettingsPanel'
-import { buildProducts, getQuizRecommendation, quizQuestions } from './quiz/recommendation'
+import { buildProducts, getQuizRecommendation, quizQuestions, resolveQuestions } from './quiz/recommendation'
 import { htmlCupomQuiz } from './print/cupom'
 
 // Cada janela do Electron é um processo próprio com o seu quiz: as telas não compartilham estado.
@@ -26,16 +26,17 @@ const finishQuiz = (answers, sessionId, pessoa) => {
     alternatives: result.alternatives.map((product) => product.name),
   }).catch((error) => console.error('Falha ao gravar resposta:', error))
   if (!api?.printReceipt) return undefined
-  const html = htmlCupomQuiz({ pessoa, result, answers, questions: quizQuestions, screen: screenNumber, sessionId })
+  const html = htmlCupomQuiz({ pessoa, result, answers, questions: resolveQuestions(answers), screen: screenNumber, sessionId })
   return api.printReceipt(html).catch((error) => ({ ok: false, erro: error.message }))
 }
 
 // Cupom de exemplo para o botão "Imprimir teste" da engrenagem.
 const testPrint = () => {
-  const answers = Object.fromEntries(quizQuestions.map((question) => [question.id, question.options[0].id]))
+  const answers = {}
+  for (const question of resolveQuestions(answers)) answers[question.id] = question.options[0].id
   const result = getQuizRecommendation(products, answers)
   const pessoa = { matricula: '0000', nome: 'TESTE DE IMPRESSAO', loja: 'GOODLIFE', time: 'Teste' }
-  return api.printReceipt(htmlCupomQuiz({ pessoa, result, answers, questions: quizQuestions, screen: screenNumber, sessionId: 'teste' }))
+  return api.printReceipt(htmlCupomQuiz({ pessoa, result, answers, questions: resolveQuestions(answers), screen: screenNumber, sessionId: 'teste' }))
     .catch((error) => ({ ok: false, erro: error.message }))
 }
 
@@ -63,6 +64,7 @@ export default function App() {
       <VitaminQuiz
         key={quizKey}
         questions={quizQuestions}
+        resolveQuestions={resolveQuestions}
         products={products}
         recommend={getQuizRecommendation}
         onComplete={finishQuiz}
