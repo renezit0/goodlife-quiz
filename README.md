@@ -36,12 +36,15 @@ uma em cada tela.
   de versão anterior é renomeado para `respostas-anterior-<data>.csv` e um novo é iniciado.
 
 **Lista de participantes:** nomes e matrículas **não ficam no código** (o repositório é público).
-O app lê, do próprio computador, a lista mais recente entre:
+O jeito recomendado é **baixar da API do CONECTA**: engrenagem → **Conta do CONECTA (API) → Entrar**,
+com usuário de admin, RH ou marketing (o mesmo do CONECTA Check-in). O app baixa as equipes
+(`GET /conecta/grupos`), guarda a sessão cifrada pelo Windows e **atualiza a lista sozinho ao abrir
+e a cada 15 minutos**; sem internet, segue com a última lista baixada. Se alguém digitar uma
+matrícula que ainda não está na lista, o app consulta a API na hora (`GET /conecta/colaborador/:matricula`).
 
-1. o cache do app **CONECTA Check-in**, se ele estiver instalado e já tiver baixado as equipes
-   (`%APPDATA%\Conecta Check-in\roster.json`), e
-2. a lista importada pela engrenagem (**Participantes do CONECTA → Importar lista**), que aceita
-   esse mesmo `roster.json` ou a planilha de times em CSV (`LOJA;MAT;NOME;DIA;TIME`).
+Fontes aceitas (vale a mais recente): a lista baixada da API, o cache do app CONECTA Check-in
+(`%APPDATA%\Conecta Check-in\roster.json`) e uma lista importada pela engrenagem
+(**Importar lista**: o `roster.json` do Check-in ou a planilha de times em CSV `LOJA;MAT;NOME;DIA;TIME`).
 
 ## Configurações (engrenagem no canto superior direito)
 
@@ -123,6 +126,7 @@ não abre outro conjunto de telas.
 ## Estrutura
 
 - `electron/main.cjs` — abre as janelas, posiciona nos monitores e grava o CSV.
+- `electron/conecta.cjs` — login na API do CONECTA, download das equipes e consulta online.
 - `electron/roster.cjs` — lista de participantes (matrícula → nome, loja, time).
 - `electron/printing.cjs` — impressão silenciosa do cupom na térmica.
 - `src/components/MatriculaStep.jsx` — tela da matrícula com teclado numérico.

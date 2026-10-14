@@ -3,12 +3,14 @@
 //   1. Cache do app CONECTA Check-in, se estiver instalado nesta máquina
 //      (%APPDATA%\Conecta Check-in\roster.json, atualizado pelo próprio check-in).
 //   2. Lista importada pela engrenagem (copiada para a pasta de dados do quiz).
+//   3. Equipes baixadas da API do CONECTA (conecta.cjs), com login feito pela engrenagem.
 // Vale a mais recente das duas.
 const fs = require('node:fs')
 const path = require('node:path')
 const { app } = require('electron')
 
 const importedFile = () => path.join(app.getPath('userData'), 'colaboradores.json')
+const apiFile = () => path.join(app.getPath('userData'), 'colaboradores-api.json')
 const checkinFile = () => path.join(app.getPath('appData'), 'Conecta Check-in', 'roster.json')
 
 // "000123" e "123" são a mesma matrícula.
@@ -62,6 +64,7 @@ let cache = { file: null, mtimeMs: 0, people: {} }
 
 function currentSource() {
   const sources = [
+    { file: apiFile(), origem: 'API do CONECTA' },
     { file: importedFile(), origem: 'importada' },
     { file: checkinFile(), origem: 'CONECTA Check-in' },
   ]
@@ -115,4 +118,4 @@ function importFrom(filePath) {
   return info()
 }
 
-module.exports = { lookup, info, importFrom, matriculaKey }
+module.exports = { lookup, info, importFrom, matriculaKey, person }

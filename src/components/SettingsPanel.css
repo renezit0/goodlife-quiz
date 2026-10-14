@@ -140,3 +140,9 @@
 
 .gs-row .gs-hint { font-size: 12px; color: #0b679c; font-weight: 500; }
 .gs-select { flex: 0 1 240px; min-width: 0; max-width: 240px; min-height: 44px; padding: 0 36px 0 16px; border: 1px solid #cfe3ee; border-radius: 999px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b679c' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 16px; color: #0b4f78; font: inherit; font-size: 14px; appearance: none; text-overflow: ellipsis; }
+
+/* Login do CONECTA: campos grandes para toque e teclado na tela. */
+.gs-login label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: #3d6a83; }
+.gs-login input { min-height: 48px; padding: 0 16px; border: 1px solid #cfe3ee; border-radius: 14px; font: inherit; font-size: 16px; color: #0b4f78; background: #f7fbfd; }
+.gs-login input:focus { outline: 2px solid #9fd8f5; border-color: #9fd8f5; }
+.gs-error { margin: 0; padding: 10px 12px; border-radius: 10px; background: #fdecec; color: #9b1c1c; font-size: 13px; }

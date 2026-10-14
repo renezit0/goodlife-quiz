@@ -100,6 +100,9 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint })
   const [participantes, setParticipantes] = useState(config.participantes)
   const [rosterMessage, setRosterMessage] = useState('')
   const [testMessage, setTestMessage] = useState('')
+  const [conecta, setConecta] = useState(config.conecta || { conectado: false })
+  const [conectaMessage, setConectaMessage] = useState('')
+  const [login, setLogin] = useState({ usuario: '', senha: '', enviando: false, erro: '' })
   const [newPin, setNewPin] = useState(undefined) // undefined = sem mudança, '' = remover
   const [saving, setSaving] = useState(false)
   const [confirmQuit, setConfirmQuit] = useState(false)
@@ -118,6 +121,38 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint })
     setParticipantes(info)
     if (info.erro) setRosterMessage(info.erro)
     else if (!info.cancelado) setRosterMessage(`Lista importada: ${info.total} pessoas.`)
+  }
+
+  const refreshRoster = async () => {
+    setParticipantes(await api.rosterInfo())
+    setConecta(await api.conectaStatus())
+  }
+
+  const conectaLogin = async (event) => {
+    event.preventDefault()
+    setLogin((current) => ({ ...current, enviando: true, erro: '' }))
+    const result = await api.conectaLogin(login.usuario, login.senha)
+    if (result.ok) {
+      setLogin({ usuario: '', senha: '', enviando: false, erro: '' })
+      setConectaMessage(`Lista baixada: ${result.total} pessoas.`)
+      setMode('form')
+    } else {
+      setLogin((current) => ({ ...current, senha: '', enviando: false, erro: result.mensagem }))
+    }
+    await refreshRoster()
+  }
+
+  const conectaSync = async () => {
+    setConectaMessage('Baixando…')
+    const result = await api.conectaSync()
+    setConectaMessage(result.ok ? `Lista atualizada: ${result.total} pessoas.` : result.mensagem)
+    await refreshRoster()
+  }
+
+  const conectaLogout = async () => {
+    setConecta(await api.conectaLogout())
+    setConectaMessage('')
+    setParticipantes(await api.rosterInfo())
   }
 
   const testPrint = async () => {
@@ -183,6 +218,20 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint })
         }}
       />
     )
+  } else if (mode === 'conecta-login') {
+    content = (
+      <form className="gs-body gs-login" onSubmit={conectaLogin}>
+        <h2>Entrar no CONECTA</h2>
+        <p className="gs-muted">Use uma conta de admin, RH ou marketing (a mesma do CONECTA Check-in). O app baixa a lista de participantes e mantém atualizada sozinho.</p>
+        <label>Usuário<input autoFocus autoComplete="username" value={login.usuario} onChange={(event) => setLogin((current) => ({ ...current, usuario: event.target.value }))} /></label>
+        <label>Senha<input type="password" autoComplete="current-password" value={login.senha} onChange={(event) => setLogin((current) => ({ ...current, senha: event.target.value }))} /></label>
+        {login.erro && <p className="gs-error">{login.erro}</p>}
+        <div className="gs-actions">
+          <button type="button" className="gs-secondary" onClick={() => setMode('form')}>Cancelar</button>
+          <button type="submit" className="gs-primary" disabled={login.enviando || !login.usuario || !login.senha}>{login.enviando ? 'Entrando…' : 'Entrar e baixar lista'}</button>
+        </div>
+      </form>
+    )
   } else if (mode === 'new-pin') {
     content = (
       <PinPad
@@ -230,6 +279,21 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint })
           <div className="gs-row">
             <div><strong>Respostas</strong><span>{config.quizzesConcluidos} quiz{config.quizzesConcluidos === 1 ? '' : 'zes'} concluído{config.quizzesConcluidos === 1 ? '' : 's'}</span><span className="gs-path" title={config.arquivoRespostas}>{config.arquivoRespostas}</span></div>
             <button type="button" className="gs-secondary" onClick={() => api.openResponses()}>Abrir pasta</button>
+          </div>
+          <div className="gs-row">
+            <div>
+              <strong>Conta do CONECTA (API)</strong>
+              <span>{conecta.conectado ? `${conecta.usuario || 'Conectado'} · ${conecta.erro || (conecta.ultimaSync ? `baixada em ${conecta.ultimaSync}` : 'ainda não baixou')}` : 'Entre para baixar a lista direto da API e manter atualizada'}</span>
+              {conectaMessage && <span className="gs-hint">{conectaMessage}</span>}
+            </div>
+            {conecta.conectado ? (
+              <div className="gs-inline-actions">
+                <button type="button" className="gs-secondary" onClick={conectaSync}>Atualizar</button>
+                <button type="button" className="gs-secondary" onClick={conectaLogout}>Sair</button>
+              </div>
+            ) : (
+              <button type="button" className="gs-secondary" onClick={() => setMode('conecta-login')}>Entrar</button>
+            )}
           </div>
           <div className="gs-row">
             <div>

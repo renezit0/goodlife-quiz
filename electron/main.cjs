@@ -4,6 +4,7 @@ const path = require('node:path')
 const { setupAutoUpdater, installIfIdle, updateStatus } = require('./updater.cjs')
 const touch = require('./touch.cjs')
 const roster = require('./roster.cjs')
+const conecta = require('./conecta.cjs')
 const printing = require('./printing.cjs')
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
@@ -218,6 +219,7 @@ const publicConfig = () => ({
   imprimir: config.imprimir,
   impressoras: config.impressoras,
   participantes: roster.info(),
+  conecta: conecta.status(),
   limites: limits,
   monitores: screen.getAllDisplays().length,
   arquivoRespostas: responsesFile(),
@@ -261,7 +263,17 @@ ipcMain.handle('app:quit', () => app.quit())
 
 // ---------- Participantes (matrícula) ----------
 
-ipcMain.handle('roster:lookup', (_event, matricula) => roster.lookup(matricula))
+// Primeiro a lista no computador (instantâneo, funciona sem internet); se não achar, pergunta à API.
+ipcMain.handle('roster:lookup', async (_event, matricula) => {
+  const local = roster.lookup(matricula)
+  if (local) return local
+  const online = await conecta.lookupOnline(roster.matriculaKey(matricula)).catch(() => null)
+  return online ? roster.person(online) : null
+})
+ipcMain.handle('conecta:status', () => conecta.status())
+ipcMain.handle('conecta:login', (_event, { usuario, senha } = {}) => conecta.login(String(usuario || '').trim(), String(senha || '')))
+ipcMain.handle('conecta:sync', () => conecta.sync())
+ipcMain.handle('conecta:logout', () => { conecta.logout(); return conecta.status() })
 ipcMain.handle('roster:info', () => roster.info())
 ipcMain.handle('roster:import', async (event) => {
   const parent = BrowserWindow.fromWebContents(event.sender)
@@ -338,6 +350,7 @@ app.whenReady().then(() => {
   powerSaveBlocker.start('prevent-display-sleep')
   openWindows()
   setupAutoUpdater({ isIdle: () => activeScreens.size === 0 })
+  conecta.startAutoSync()
   calibrateIfNeeded().catch((error) => console.error('Falha ao verificar o toque:', error))
 })
 
