@@ -40,10 +40,10 @@ export function htmlCupomQuiz({ pessoa, result, answers, questions, screen, sess
 
   const mainHtml = main ? `
     <div class="center eyebrow">SUA SUGESTÃO GOODLIFE</div>
-    ${main.image ? `<div class="center"><img class="produto" src="${absolute(main.image)}" alt="" /></div>` : ''}
+    ${main.hasPhoto && main.image ? `<div class="center"><img class="produto" src="${absolute(main.image)}" alt="" /></div>` : ''}
     <div class="center produto-nome">${escapeHtml(productName(main))}</div>
     <div class="center small">${escapeHtml(main.line)}${main.code ? ` · Cód. ${escapeHtml(main.code)}` : ''}</div>
-    ${result.profile?.summary ? `<p class="resumo">${escapeHtml(result.profile.summary)}</p>` : ''}
+    ${main.reason?.text ? `<p class="resumo">${escapeHtml(main.reason.text)}</p>` : ''}
     ${main.highlights?.length ? `<ul class="destaques">${main.highlights.slice(0, 3).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : ''}
   ` : '<div class="center">Nenhum produto disponível no momento.</div>'
 
@@ -56,6 +56,7 @@ export function htmlCupomQuiz({ pessoa, result, answers, questions, screen, sess
         <div>
           <div class="alt-nome">${escapeHtml(productName(product))}</div>
           <div class="small">${escapeHtml(product.line)}${product.code ? ` · Cód. ${escapeHtml(product.code)}` : ''}</div>
+          ${product.reason?.text ? `<div class="alt-motivo">${escapeHtml(product.reason.text)}</div>` : ''}
         </div>
       </div>`).join('')}
   ` : ''
@@ -88,6 +89,7 @@ export function htmlCupomQuiz({ pessoa, result, answers, questions, screen, sess
     .destaques { margin: 4px 0 0; padding-left: 14px; font-size: 11px; line-height: 1.3; }
     .alt { display: flex; gap: 8px; align-items: flex-start; margin-top: 6px; }
     .alt-num { flex: 0 0 18px; height: 18px; border: 1.5px solid #111; border-radius: 50%; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .alt-motivo { font-size: 11px; line-height: 1.3; margin-top: 2px; }
     .alt-nome { font-size: 13px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
     .respostas { margin: 3px 0 0; padding-left: 14px; font-size: 11px; line-height: 1.35; }
     .aviso { font-size: 10px; text-align: center; margin-top: 6px; }

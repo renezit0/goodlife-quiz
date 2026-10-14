@@ -1,5 +1,7 @@
 // Perguntas, catálogo e regra de recomendação — extraídos do site (goodlife-site/src/App.jsx).
 import callfarmaCatalog from './goodlife-callfarma.json'
+import { produtosDoEvento } from './evento'
+import goodlifeLogo from '../assets/logo-good-fim.png'
 
 const imageModules = import.meta.glob('../assets/produtos/*.{png,jpg,jpeg,webp,avif,svg}', {
   eager: true,
@@ -55,33 +57,6 @@ const profileRules = [
     keywords: ['sleep', 'sono', 'calm', 'melatonin', 'melatonina'],
     stack: ['desaceleração progressiva para a noite', 'apoio para recuperação física e mental'],
     focus: 'melhorar a qualidade do sono e da recuperação',
-  },
-]
-
-const detailRules = [
-  {
-    keywords: ['kids', 'tutti'],
-    description:
-      'Versão pensada para rotina infantil, com sabor agradável e composição para acompanhar fases de crescimento.',
-    bullets: ['uso diário mais simples para crianças', 'sabor e formato voltados para adesão'],
-  },
-  {
-    keywords: ['melatonina'],
-    description:
-      'Fórmula noturna para reduzir a latência do sono e melhorar a sensação de descanso ao acordar.',
-    bullets: ['ideal para rotina noturna consistente', 'aplicação prática em cápsulas ou gotas'],
-  },
-  {
-    keywords: ['omega'],
-    description:
-      'Composição de ômegas para suporte cardiovascular e cognitivo, com foco em equilíbrio contínuo.',
-    bullets: ['suporte para desempenho mental', 'uso estratégico para manutenção diária'],
-  },
-  {
-    keywords: ['magnesio', 'bisglicinato'],
-    description:
-      'Linha mineral para função neuromuscular e conforto corporal, com foco em biodisponibilidade.',
-    bullets: ['equilíbrio de contração e relaxamento muscular', 'suporte para rotina física intensa'],
   },
 ]
 
@@ -222,11 +197,6 @@ const profileFromFileName = (rawName) => {
   )
 }
 
-const detailFromFileName = (rawName) => {
-  const normalized = normalize(rawName)
-  return detailRules.find(({ keywords }) => keywords.some((token) => normalized.includes(token)))
-}
-
 const callfarmaByCode = new Map(callfarmaCatalog.map((item) => [String(item.code), item]))
 
 const lineByCode = {
@@ -263,6 +233,12 @@ const lineByCode = {
   '64085': 'Beleza e vitalidade',
   '64086': 'Energia e metabolismo',
   '66543': 'Energia e performance',
+  '5198': 'Ossos e articulações',
+  '5304': 'Imunidade e respiratório',
+  '5338': 'Imunidade e respiratório',
+  '64317': 'Sono e relaxamento',
+  '64356': 'Energia e metabolismo',
+  '64535': 'Imunidade e respiratório',
 }
 
 const extractProductCode = (slug) => {
@@ -270,222 +246,219 @@ const extractProductCode = (slug) => {
   return match ? match[1] : null
 }
 
-const quizProfileMeta = {
-  multivitaminico: {
-    title: 'Base diária inteligente',
-    summary: 'Seu perfil pede uma vitamina de uso contínuo para sustentar energia, imunidade e rotina.',
-    matchKeywords: ['multi', 'polivitaminico', 'complexo b', 'a-z'],
+
+// ---------- Recomendação ----------
+//
+// Cada resposta soma pontos em necessidades (energia, sono, imunidade...). Cada produto do
+// evento tem uma ficha de benefícios (evento.js). A nota de um produto é o quanto ele atende
+// às necessidades da pessoa, com ajustes de público (mulher, 50+). A sugestão principal é a de
+// maior nota; as 2 extras são escolhidas para COMPLEMENTAR: o que a principal já cobre pesa
+// menos, então elas atendem outras necessidades da pessoa. Cada sugestão leva o motivo, tirado
+// das respostas que mais pesaram para ela.
+
+const needsByAnswer = {
+  symptom: {
+    fatigue: { energia: 4, base: 1 },
+    immunity: { imunidade: 4, respiratorio: 2 },
+    sleep: { sono: 4, estresse: 1 },
+    food: { base: 4, imunidade: 1 },
+    beauty: { beleza: 5 },
   },
-  imunidade: {
-    title: 'Defesa e constância',
-    summary: 'A recomendação prioriza reforço imunológico para acompanhar rotina intensa e sazonalidade.',
-    matchKeywords: ['imuno', 'vitamina c', 'zinco', 'xarope', 'ciflogood', 'acetil'],
+  age: {
+    '18-29': { energia: 1 },
+    '30-44': { base: 1, estresse: 1 },
+    '45-59': { ossos: 2, mente: 1, visao: 2, base: 1 },
+    '60+': { ossos: 3, mente: 2, visao: 3, base: 1 },
   },
-  energia: {
-    title: 'Performance e disposição',
-    summary: 'Seu resultado aponta para suporte metabólico, foco e recuperação para dias mais exigentes.',
-    matchKeywords: ['magnesio', 'magmemor', 'complexo b', 'b12', 'acetil'],
+  gender: { female: { beleza: 0.5 }, male: {} },
+  goal: {
+    energia: { energia: 5 },
+    imunidade: { imunidade: 5, respiratorio: 1 },
+    sono: { sono: 5 },
+    beleza: { beleza: 5 },
+    ossos: { ossos: 4, muscular: 1.5 },
+    mente: { mente: 5 },
   },
-  omega3: {
-    title: 'Coração e cérebro',
-    summary: 'Seu perfil combina melhor com soluções de longo prazo para cognição, inflamação e equilíbrio geral.',
-    matchKeywords: ['omega', 'luteina'],
+  activity: {
+    sedentary: { base: 1 },
+    moderate: { muscular: 1, energia: 1 },
+    high: { muscular: 3, energia: 1, ossos: 1 },
   },
-  beleza: {
-    title: 'Beleza de dentro para fora',
-    summary: 'O foco ideal para você está em fórmulas voltadas para pele, cabelo, unhas e vitalidade.',
-    matchKeywords: ['cabelo', 'pele', 'barba', 'colageno'],
+  routine: {
+    rush: { base: 3, energia: 1 },
+    stress: { estresse: 3, mente: 1, sono: 1, visao: 1 },
+    seasonal: { imunidade: 3, respiratorio: 3 },
+    aesthetic: { beleza: 3 },
   },
-  ossos: {
-    title: 'Estrutura e mobilidade',
-    summary: 'A prioridade aqui é manutenção óssea, articulações e recuperação estrutural do corpo.',
-    matchKeywords: ['calcio', 'k2', 'd3', 'osteo', 'colageno', 'magnesio flex'],
-  },
-  sono: {
-    title: 'Relaxamento e recuperação',
-    summary: 'Seu quiz sinaliza que dormir melhor pode ser a chave para evoluir o restante da rotina.',
-    matchKeywords: ['melatonina'],
+  sleep: {
+    good: {},
+    irregular: { sono: 2, estresse: 1 },
+    poor: { sono: 4, estresse: 1 },
   },
 }
 
-const inferQuizProfileFromProduct = (product) => {
-  const haystack = normalize(`${product.name} ${product.line} ${product.description}`)
-
-  if (haystack.includes('melatonina') || haystack.includes('sono')) return 'sono'
-  if (haystack.includes('omega') || haystack.includes('luteina') || haystack.includes('cerebro') || haystack.includes('coracao')) return 'omega3'
-  if (haystack.includes('cabelo') || haystack.includes('pele') || haystack.includes('barba') || haystack.includes('beleza')) return 'beleza'
-  if (haystack.includes('calcio') || haystack.includes('osteo') || haystack.includes('articul') || haystack.includes('d3') || haystack.includes('k2')) return 'ossos'
-  if (haystack.includes('imuno') || haystack.includes('zinco') || haystack.includes('ciflogood') || haystack.includes('gripe') || haystack.includes('xarope')) return 'imunidade'
-  if (haystack.includes('magnesio') || haystack.includes('magmemor') || haystack.includes('energia') || haystack.includes('performance') || haystack.includes('metabol')) return 'energia'
-  if (haystack.includes('multi') || haystack.includes('polivitaminico') || haystack.includes('a z')) return 'multivitaminico'
-
-  return product.profileId || 'multivitaminico'
+const needProfiles = {
+  energia: { title: 'Energia e disposição', focus: 'ter mais energia e disposição' },
+  imunidade: { title: 'Defesa e imunidade', focus: 'reforçar a imunidade' },
+  sono: { title: 'Sono e recuperação', focus: 'dormir melhor' },
+  beleza: { title: 'Beleza de dentro para fora', focus: 'cuidar de cabelo, unhas e pele' },
+  ossos: { title: 'Ossos e articulações', focus: 'cuidar de ossos e articulações' },
+  mente: { title: 'Cérebro, coração e foco', focus: 'cuidar de memória, foco, coração e cérebro' },
+  estresse: { title: 'Equilíbrio no dia a dia', focus: 'lidar melhor com o estresse' },
+  respiratorio: { title: 'Respiração e garganta', focus: 'cuidar da respiração e da garganta' },
+  base: { title: 'Base nutricional diária', focus: 'garantir uma base de vitaminas todo dia' },
+  muscular: { title: 'Músculos e recuperação', focus: 'recuperar o corpo do esforço' },
+  visao: { title: 'Visão e telas', focus: 'cuidar dos olhos' },
 }
 
-const inferAudienceFromProduct = (product) => {
-  const haystack = normalize(`${product.name} ${product.line} ${product.description}`)
+const ageAtLeast45 = (answers) => answers.age === '45-59' || answers.age === '60+'
 
-  if (haystack.includes('kids') || haystack.includes('infantil') || haystack.includes('crianca') || haystack.includes('tutti')) {
-    return 'kids'
-  }
-
-  if (haystack.includes('homem')) return 'male'
-  if (haystack.includes('mulher')) return 'female'
-
-  return 'adult'
-}
-
-const getAgeBucket = (answers) => {
-  const age = answers.age
-  if (age === '18-29' || age === '30-44' || age === '45-59' || age === '60+') {
-    return 'adult'
-  }
-  return null
-}
-
-const getGenderPreference = (answers) => {
-  if (answers.gender === 'female') return 'female'
-  if (answers.gender === 'male') return 'male'
-  return null
-}
-
-export const buildProducts = () =>
-  Object.entries(imageModules)
-    .sort(([a], [b]) => a.localeCompare(b, 'pt-BR'))
-    .map(([path, src], index) => {
-      const slug = path.split('/').pop()?.replace(/\.[^/.]+$/, '') || `produto-${index + 1}`
-      const profile = profileFromFileName(slug)
-      const detail = detailFromFileName(slug)
-      const name = prettifyNameFromSlug(slug)
-      const specs = extractSpecs(slug)
-      const code = extractProductCode(slug)
-      const callfarmaData = code ? callfarmaByCode.get(code) : null
-      const manualLine = code ? lineByCode[code] : null
-      const storeUrl = callfarmaData?.url || 'https://callfarma.com.br/busca/goodlife'
-
-      return {
-        id: `${profile.id}-${index + 1}`,
-        name,
-        code,
-        officialName: callfarmaData?.name || null,
-        line: manualLine || profile.title,
-        profileId: profile.id,
-        image: src,
-        storeUrl,
-        highlights: [...profile.stack, ...(detail?.bullets || []), ...specs].slice(0, 4),
-        description:
-          callfarmaData?.description ||
-          detail?.description ||
-          `${name} Goodlife foi desenvolvido para ${profile.focus}, com composição desenhada para uso prático e consistente.`,
-      }
-    })
-
-export const getQuizRecommendation = (products, answers) => {
-  const scoreBoard = Object.keys(quizProfileMeta).reduce((acc, key) => {
-    acc[key] = 0
-    return acc
-  }, {})
-
-  quizQuestions.forEach((question) => {
-    const selectedOptionId = answers[question.id]
-    const selectedOption = question.options.find((option) => option.id === selectedOptionId)
-    if (!selectedOption) return
-
-    Object.entries(selectedOption.scores).forEach(([profileId, points]) => {
-      scoreBoard[profileId] = (scoreBoard[profileId] || 0) + points
-    })
-  })
-
-  const sortedProfiles = Object.entries(scoreBoard).sort((a, b) => b[1] - a[1])
-  const [winnerId] = sortedProfiles[0] || []
-  const winnerMeta = quizProfileMeta[winnerId] || quizProfileMeta.multivitaminico
-  const ageBucket = getAgeBucket(answers)
-  const genderPreference = getGenderPreference(answers)
-  const wantsHeartAndBrain = answers.goal === 'mente'
-
-  const ranked =
-    products
-      .map((product) => {
-        const inferredProfile = inferQuizProfileFromProduct(product)
-        const audience = inferAudienceFromProduct(product)
-        const haystack = normalize(`${product.name} ${product.line} ${product.description}`)
-        const directProfileScore = scoreBoard[inferredProfile] || 0
-        const winnerBonus = inferredProfile === winnerId ? 8 : 0
-        const keywordBonus = winnerMeta.matchKeywords.reduce(
-          (total, keyword) => total + (haystack.includes(normalize(keyword)) ? 1 : 0),
-          0,
-        )
-        const audiencePenalty =
-          ageBucket === 'adult' && audience === 'kids'
-            ? -1000
-            : 0
-        const genericAdultBonus =
-          ageBucket === 'adult' && audience === 'adult'
-            ? 3
-            : 0
-        const genderBonus =
-          genderPreference && audience === genderPreference
-            ? 6
-            : 0
-        const genderPenalty =
-          genderPreference && (audience === 'male' || audience === 'female') && audience !== genderPreference
-            ? -6
-            : 0
-        const lineBonus = normalize(product.line).includes(normalize(winnerMeta.title)) ? 2 : 0
-        const omegaIntentBonus =
-          wantsHeartAndBrain && inferredProfile === 'omega3'
-            ? 24
-            : 0
-        const omegaKeywordBonus =
-          wantsHeartAndBrain && (haystack.includes('omega') || haystack.includes('epa') || haystack.includes('dha'))
-            ? 8
-            : 0
-        const antiGenericPenalty =
-          wantsHeartAndBrain && inferredProfile === 'multivitaminico'
-            ? -12
-            : 0
-
-        return {
-          product,
-          score:
-            directProfileScore * 10 +
-            winnerBonus +
-            keywordBonus +
-            genericAdultBonus +
-            genderBonus +
-            genderPenalty +
-            lineBonus +
-            omegaIntentBonus +
-            omegaKeywordBonus +
-            antiGenericPenalty +
-            audiencePenalty,
-        }
-      })
-      .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, 'pt-BR'))
-
-  const bestProduct = ranked[0]?.product || products[0] || null
-
-  // Mais duas sugestões na sequência do ranking, sem produtos infantis para adultos e, quando
-  // possível, de linhas diferentes da principal (para não sugerir três variações da mesma coisa).
-  const candidates = ranked.filter(({ product, score }) => product !== bestProduct && score > -500).map(({ product }) => product)
-  const alternatives = []
-  const usedLines = new Set([bestProduct?.line])
-  for (const product of candidates) {
-    if (alternatives.length === 2) break
-    if (!usedLines.has(product.line)) {
-      alternatives.push(product)
-      usedLines.add(product.line)
+function needsFrom(answers) {
+  const needs = {}
+  for (const [questionId, optionId] of Object.entries(answers)) {
+    for (const [need, weight] of Object.entries(needsByAnswer[questionId]?.[optionId] || {})) {
+      needs[need] = (needs[need] || 0) + weight
     }
   }
-  for (const product of candidates) {
-    if (alternatives.length === 2) break
-    if (!alternatives.includes(product)) alternatives.push(product)
-  }
+  return needs
+}
 
+// Ajuste de público: polivitamínico da mulher só para mulheres (abaixo dos 45, o 50+ é melhor
+// depois), e o 50+ só a partir dos 45.
+function audienceFit(product, answers) {
+  if (product.publico === 'mulher') {
+    if (answers.gender !== 'female') return null
+    return ageAtLeast45(answers) ? -6 : 5
+  }
+  if (product.publico === '50+') return ageAtLeast45(answers) ? 6 : null
+  return 0
+}
+
+function scoreProduct(product, needs, answers) {
+  const fit = audienceFit(product, answers)
+  if (fit === null) return null
+  const contributions = Object.entries(product.beneficios || {})
+    .map(([need, benefit]) => [need, (needs[need] || 0) * benefit])
+    .filter(([, value]) => value > 0)
+  // Normaliza pelo "tamanho" da ficha: um polivitamínico que cobre um pouco de tudo não ganha
+  // só por somar várias necessidades pequenas de quem quer algo específico.
+  const norm = Math.hypot(...Object.values(product.beneficios || {})) || 1
+  const total = contributions.reduce((sum, [, value]) => sum + value, 0) * (5 / norm)
+  // Desempate estável e leve pelo estoque do evento (mais unidades, mais chance).
+  return { product, score: total + fit + (product.qtde || 0) / 100, contributions }
+}
+
+// Respostas que mais pesaram numa necessidade, para explicar a sugestão com as palavras da pessoa.
+function answersBehind(need, answers, questions) {
+  return questions
+    .map((question) => {
+      const weight = needsByAnswer[question.id]?.[answers[question.id]]?.[need] || 0
+      const option = question.options.find((item) => item.id === answers[question.id])
+      return { weight, label: option?.label }
+    })
+    .filter(({ weight, label }) => weight >= 1 && label)
+    .sort((a, b) => b.weight - a.weight)
+}
+
+function reasonFor(scored, answers, questions) {
+  const ranked = [...scored.contributions].sort((a, b) => b[1] - a[1])
+  const mainNeed = ranked[0]?.[0]
+  // Só necessidades que pesaram de verdade (30%+ da principal) e, de preferência, respostas
+  // com peso 2 ou mais: evita motivos fracos como a faixa de idade puxando "energia".
+  const strongNeeds = ranked.filter(([, value]) => value >= (ranked[0]?.[1] || 0) * 0.3).slice(0, 2)
+  const behind = strongNeeds.flatMap(([need]) => answersBehind(need, answers, questions))
+  const strong = behind.filter(({ weight }) => weight >= 2)
+  const labels = []
+  for (const { label } of strong.length ? strong : behind) {
+    if (!labels.includes(label) && labels.length < 2) labels.push(label)
+  }
+  const ageLabel = questions.find((q) => q.id === 'age')?.options.find((o) => o.id === answers.age)?.label
+  if (scored.product.publico === 'mulher') labels.push('Mulher')
+  if (scored.product.publico === '50+' && !labels.includes(ageLabel)) labels.push(ageLabel)
+  const quoted = labels.filter(Boolean).slice(0, 3).map((label) => `“${label}”`)
+  const joined = quoted.length > 1 ? `${quoted.slice(0, -1).join(', ')} e ${quoted.at(-1)}` : quoted[0]
   return {
-    profileId: winnerId,
-    profile: winnerMeta,
-    product: bestProduct,
-    alternatives,
+    need: mainNeed,
+    text: joined ? `Você marcou ${joined}: ajuda a ${needProfiles[mainNeed]?.focus || 'cuidar da sua rotina'}.` : `Ajuda a ${needProfiles[mainNeed]?.focus || 'cuidar da sua rotina'}.`,
   }
 }
+
+export const getQuizRecommendation = (products, answers) => {
+  const needs = needsFrom(answers)
+  const scoreAll = (needsNow) => products
+    .map((product) => scoreProduct(product, needsNow, answers))
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, 'pt-BR'))
+
+  // A principal respeita o objetivo que a pessoa escolheu ("O que você quer cuidar primeiro?"):
+  // só entram produtos fortes nesse objetivo (nota 3+ na ficha), se houver algum.
+  const goalNeed = Object.entries(needsByAnswer.goal[answers.goal] || {}).sort((a, b) => b[1] - a[1])[0]?.[0]
+  const eligible = scoreAll(needs).filter(({ product }) => product.papel !== 'complemento')
+  const first = eligible.find(({ product }) => (product.beneficios?.[goalNeed] || 0) >= 3) || eligible[0]
+  const picked = first ? [first] : []
+
+  // O que já foi coberto pesa menos: as extras vão para as outras necessidades da pessoa.
+  const residual = { ...needs }
+  const cover = (product) => {
+    for (const [need, benefit] of Object.entries(product.beneficios || {})) {
+      residual[need] = (residual[need] || 0) * Math.max(0, 1 - benefit / 6)
+    }
+  }
+  if (first) cover(first.product)
+  // Prefere extras de outra "especialidade" (ex.: não B12 e Complexo B juntos), desde que
+  // ainda façam sentido para a pessoa (nota de pelo menos 35% da melhor disponível).
+  const primary = (product) => Object.entries(product.beneficios || {}).sort((a, b) => b[1] - a[1])[0]?.[0]
+  while (picked.length < 3) {
+    const options = scoreAll(residual).filter(({ product }) => !picked.some((item) => item.product === product))
+    if (!options.length) break
+    const usedPrimaries = picked.map((item) => primary(item.product))
+    const next = options.find(({ product, score }) => !usedPrimaries.includes(primary(product)) && score >= options[0].score * 0.35) || options[0]
+    picked.push(next)
+    cover(next.product)
+  }
+
+  const [main, ...extras] = picked.map((scored) => ({ ...scored.product, reason: reasonFor(scored, answers, quizQuestions) }))
+  const topNeed = Object.entries(needs).sort((a, b) => b[1] - a[1])[0]?.[0] || 'base'
+  const profileNeed = main?.reason.need || topNeed
+
+  return {
+    profileId: profileNeed,
+    profile: { title: needProfiles[profileNeed]?.title || 'Seu momento', summary: main?.reason.text || '' },
+    product: main || null,
+    alternatives: extras,
+  }
+}
+
+// ---------- Produtos do evento ----------
+
+const slugify = (text) => normalize(text).replace(/\+/g, ' ').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+// Fotos por código (o código é o número no fim do nome do arquivo).
+const imageByCode = new Map(Object.entries(imageModules).map(([path, src]) => {
+  const slug = path.split('/').pop()?.replace(/\.[^/.]+$/, '') || ''
+  return [extractProductCode(slug), { slug, src }]
+}))
+
+// Só os produtos levados ao evento (evento.js), com a ficha de benefícios de cada um.
+export const buildProducts = () =>
+  produtosDoEvento.map((item, index) => {
+    const { code, nome } = item
+    const callfarmaData = callfarmaByCode.get(code)
+    const photo = imageByCode.get(code)
+    const officialName = callfarmaData?.name || nome || `GOODLIFE ${code}`
+    const slug = photo?.slug || `${slugify(officialName)}-${code}`
+    const profile = profileFromFileName(slug)
+    const name = prettifyNameFromSlug(slug)
+    return {
+      ...item,
+      id: `produto-${index + 1}`,
+      name,
+      officialName,
+      line: lineByCode[code] || profile.title,
+      image: photo?.src || goodlifeLogo,
+      hasPhoto: Boolean(photo),
+      storeUrl: callfarmaData?.url || `https://www.callfarma.com.br/produto/${code}`,
+      highlights: item.destaques || extractSpecs(slug),
+      description: callfarmaData?.description || `${name} GoodLife.`,
+    }
+  })
