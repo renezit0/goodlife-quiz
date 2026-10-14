@@ -9,6 +9,11 @@ contextBridge.exposeInMainWorld('goodlife', {
   openResponses: () => ipcRenderer.invoke('app:open-responses'),
   quit: () => ipcRenderer.invoke('app:quit'),
   calibrateTouch: () => ipcRenderer.invoke('touch:calibrate'),
+  lookupPerson: (matricula) => ipcRenderer.invoke('roster:lookup', matricula),
+  rosterInfo: () => ipcRenderer.invoke('roster:info'),
+  importRoster: () => ipcRenderer.invoke('roster:import'),
+  listPrinters: () => ipcRenderer.invoke('printer:list'),
+  printReceipt: (html) => ipcRenderer.invoke('print:receipt', html),
   onConfigChanged: (callback) => {
     const listener = (_event, config) => callback(config)
     ipcRenderer.on('config:changed', listener)

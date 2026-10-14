@@ -1,8 +1,10 @@
-const { app, BrowserWindow, ipcMain, powerSaveBlocker, screen, shell } = require('electron')
+const { app, BrowserWindow, dialog, ipcMain, powerSaveBlocker, screen, shell } = require('electron')
 const fs = require('node:fs')
 const path = require('node:path')
 const { setupAutoUpdater, installIfIdle, updateStatus } = require('./updater.cjs')
 const touch = require('./touch.cjs')
+const roster = require('./roster.cjs')
+const printing = require('./printing.cjs')
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 
@@ -18,7 +20,8 @@ const argJanela = process.argv.includes('--janela')
 
 // ---------- Configuração (engrenagem no canto da tela) ----------
 
-const defaults = { telas: 2, telaCheia: true, inatividadeSegundos: 60, escala: 100, senha: '', toqueCalibradoPara: '' }
+// impressoras: nome da impressora de cada tela ('' = padrão do Windows).
+const defaults = { telas: 2, telaCheia: true, inatividadeSegundos: 60, escala: 100, senha: '', toqueCalibradoPara: '', imprimir: true, impressoras: {} }
 const limits = { telas: [1, 4], inatividadeSegundos: [15, 600], escala: [70, 150] }
 const configFile = () => process.env.GOODLIFE_CONFIG || path.join(app.getPath('userData'), 'config.json')
 let config = { ...defaults }
@@ -36,6 +39,9 @@ function sanitize(raw) {
     escala: clamp(raw.escala, limits.escala, defaults.escala),
     senha: typeof raw.senha === 'string' && /^\d{4,8}$/.test(raw.senha) ? raw.senha : '',
     toqueCalibradoPara: typeof raw.toqueCalibradoPara === 'string' ? raw.toqueCalibradoPara : '',
+    imprimir: raw.imprimir !== false,
+    impressoras: Object.fromEntries(Object.entries(raw.impressoras && typeof raw.impressoras === 'object' ? raw.impressoras : {})
+      .filter(([tela, nome]) => /^\d$/.test(tela) && typeof nome === 'string')),
   }
 }
 
@@ -57,7 +63,7 @@ const useFullscreen = () => !argJanela && config.telaCheia
 
 // ---------- Respostas ----------
 
-const csvHeader = 'data_hora;tela;sessao;sintoma;idade;perfil;objetivo;atividade;rotina;sono;resultado_perfil;produto\n'
+const csvHeader = 'data_hora;tela;sessao;matricula;nome;loja;sintoma;idade;perfil;objetivo;atividade;rotina;sono;resultado_perfil;produto;sugestao_2;sugestao_3\n'
 const responsesFile = () =>
   process.env.GOODLIFE_RESPOSTAS || path.join(app.getPath('documents'), 'GoodLife Quiz', 'respostas.csv')
 
@@ -81,12 +87,19 @@ function countSessions() {
 ipcMain.handle('quiz:response', (_event, response) => {
   const file = responsesFile()
   fs.mkdirSync(path.dirname(file), { recursive: true })
+  // Arquivo de uma versão anterior (colunas diferentes): guarda com outro nome e começa um novo.
+  if (fs.existsSync(file) && fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '').split('\n')[0] + '\n' !== csvHeader) {
+    fs.renameSync(file, file.replace(/\.csv$/i, `-anterior-${Date.now()}.csv`))
+  }
   if (!fs.existsSync(file)) fs.writeFileSync(file, '﻿' + csvHeader)
-  const { answers = {} } = response
+  const { answers = {}, pessoa = {} } = response
   const row = [
     new Date().toLocaleString('pt-BR'),
     response.screen,
     response.sessionId,
+    pessoa.matricula,
+    pessoa.nome,
+    pessoa.loja,
     answers.symptom,
     answers.age,
     answers.gender,
@@ -96,6 +109,8 @@ ipcMain.handle('quiz:response', (_event, response) => {
     answers.sleep,
     response.profileId,
     response.productName,
+    response.alternatives?.[0],
+    response.alternatives?.[1],
   ].map(csvCell).join(';')
   fs.appendFileSync(file, row + '\n')
   return true
@@ -200,6 +215,9 @@ const publicConfig = () => ({
   inatividadeSegundos: config.inatividadeSegundos,
   escala: config.escala,
   temSenha: Boolean(config.senha),
+  imprimir: config.imprimir,
+  impressoras: config.impressoras,
+  participantes: roster.info(),
   limites: limits,
   monitores: screen.getAllDisplays().length,
   arquivoRespostas: responsesFile(),
@@ -240,6 +258,42 @@ ipcMain.handle('app:open-responses', () => {
 })
 
 ipcMain.handle('app:quit', () => app.quit())
+
+// ---------- Participantes (matrícula) ----------
+
+ipcMain.handle('roster:lookup', (_event, matricula) => roster.lookup(matricula))
+ipcMain.handle('roster:info', () => roster.info())
+ipcMain.handle('roster:import', async (event) => {
+  const parent = BrowserWindow.fromWebContents(event.sender)
+  const { canceled, filePaths } = await dialog.showOpenDialog(parent, {
+    title: 'Importar lista de participantes',
+    filters: [{ name: 'Lista de participantes', extensions: ['json', 'csv'] }],
+    properties: ['openFile'],
+  })
+  if (canceled || !filePaths[0]) return { ...roster.info(), cancelado: true }
+  try {
+    return roster.importFrom(filePaths[0])
+  } catch (error) {
+    return { ...roster.info(), erro: error.message }
+  }
+})
+
+// ---------- Impressão do cupom ----------
+
+const screenOf = (sender) => String(windows.findIndex((win) => !win.isDestroyed() && win.webContents === sender) + 1 || 1)
+const printerFor = (tela) => config.impressoras[String(tela)] || ''
+
+ipcMain.handle('printer:list', (event) => printing.listPrinters(event.sender))
+
+ipcMain.handle('print:receipt', async (event, html) => {
+  if (!config.imprimir) return { ok: false, desligado: true }
+  try {
+    return await printing.printHtml({ html, deviceName: printerFor(screenOf(event.sender)) })
+  } catch (error) {
+    console.error('Falha ao imprimir o cupom:', error)
+    return { ok: false, erro: error.message }
+  }
+})
 
 // ---------- Toque em vários monitores ----------
 

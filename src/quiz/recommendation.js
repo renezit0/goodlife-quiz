@@ -366,6 +366,8 @@ export const buildProducts = () =>
       return {
         id: `${profile.id}-${index + 1}`,
         name,
+        code,
+        officialName: callfarmaData?.name || null,
         line: manualLine || profile.title,
         profileId: profile.id,
         image: src,
@@ -401,7 +403,7 @@ export const getQuizRecommendation = (products, answers) => {
   const genderPreference = getGenderPreference(answers)
   const wantsHeartAndBrain = answers.goal === 'mente'
 
-  const bestProduct =
+  const ranked =
     products
       .map((product) => {
         const inferredProfile = inferQuizProfileFromProduct(product)
@@ -459,13 +461,31 @@ export const getQuizRecommendation = (products, answers) => {
             audiencePenalty,
         }
       })
-      .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, 'pt-BR'))[0]?.product ||
-    products[0] ||
-    null
+      .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, 'pt-BR'))
+
+  const bestProduct = ranked[0]?.product || products[0] || null
+
+  // Mais duas sugestões na sequência do ranking, sem produtos infantis para adultos e, quando
+  // possível, de linhas diferentes da principal (para não sugerir três variações da mesma coisa).
+  const candidates = ranked.filter(({ product, score }) => product !== bestProduct && score > -500).map(({ product }) => product)
+  const alternatives = []
+  const usedLines = new Set([bestProduct?.line])
+  for (const product of candidates) {
+    if (alternatives.length === 2) break
+    if (!usedLines.has(product.line)) {
+      alternatives.push(product)
+      usedLines.add(product.line)
+    }
+  }
+  for (const product of candidates) {
+    if (alternatives.length === 2) break
+    if (!alternatives.includes(product)) alternatives.push(product)
+  }
 
   return {
     profileId: winnerId,
     profile: winnerMeta,
     product: bestProduct,
+    alternatives,
   }
 }

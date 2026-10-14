@@ -22,6 +22,27 @@ uma em cada tela.
   muitas opções viram duas colunas. Testado de 640×480 até 1080×1920, em pé e deitado.
 - **Funciona offline:** imagens, logos e fonte vão dentro do app.
 
+## Matrícula e cupom impresso (CONECTA 2026)
+
+- Depois de "INICIAR JÁ", o quiz pede a **matrícula** num teclado numérico na tela (um teclado USB
+  também funciona). Achando a pessoa, mostra "Olá, Fulano!" com loja e time para ela confirmar.
+  Se a matrícula não estiver na lista, dá para seguir assim mesmo.
+- Ao terminar, o app **imprime um cupom** na térmica de 80 mm (silencioso, como na pré-venda):
+  participante, sugestão GoodLife principal com foto e código, **mais duas sugestões na sequência**,
+  perfil e respostas. A tela avisa "Retire seu cupom na impressora".
+- Cada tela pode ter a sua impressora (engrenagem → Impressora da tela N); o padrão é a impressora
+  padrão do Windows. Há um botão de **Imprimir teste**.
+- O CSV de respostas ganhou matrícula, nome, loja e as duas sugestões extras. Um `respostas.csv`
+  de versão anterior é renomeado para `respostas-anterior-<data>.csv` e um novo é iniciado.
+
+**Lista de participantes:** nomes e matrículas **não ficam no código** (o repositório é público).
+O app lê, do próprio computador, a lista mais recente entre:
+
+1. o cache do app **CONECTA Check-in**, se ele estiver instalado e já tiver baixado as equipes
+   (`%APPDATA%\Conecta Check-in\roster.json`), e
+2. a lista importada pela engrenagem (**Participantes do CONECTA → Importar lista**), que aceita
+   esse mesmo `roster.json` ou a planilha de times em CSV (`LOJA;MAT;NOME;DIA;TIME`).
+
 ## Configurações (engrenagem no canto superior direito)
 
 Toque na engrenagem em qualquer tela. Tudo é ajustável por toque, sem teclado:
@@ -102,6 +123,10 @@ não abre outro conjunto de telas.
 ## Estrutura
 
 - `electron/main.cjs` — abre as janelas, posiciona nos monitores e grava o CSV.
+- `electron/roster.cjs` — lista de participantes (matrícula → nome, loja, time).
+- `electron/printing.cjs` — impressão silenciosa do cupom na térmica.
+- `src/components/MatriculaStep.jsx` — tela da matrícula com teclado numérico.
+- `src/print/cupom.js` — HTML do cupom (sugestão + 2).
 - `electron/updater.cjs` — atualização automática pelo GitHub, só com as telas no início.
 - `electron/preload.cjs` — ponte segura entre o quiz e o processo principal.
 - `src/components/VitaminQuiz.jsx` — o quiz (mesmo componente do site, com volta automática).

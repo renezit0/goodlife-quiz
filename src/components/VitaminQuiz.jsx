@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import callfarmaLogo from '../assets/callfarma-logo.png'
 import goodlifeLogo from '../assets/logo-good-fim.png'
+import MatriculaStep from './MatriculaStep'
 import './VitaminQuiz.css'
 
 const steps = [
@@ -54,8 +55,13 @@ function Icon({ name, className = '' }) {
   return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.spark}</svg>
 }
 
-export default function VitaminQuiz({ questions, products, recommend, onComplete, onActiveChange, idleResetMs = 0 }) {
+// lookupPerson: quando informado, o quiz começa pedindo a matrícula do participante.
+// onComplete(answers, sessionId, pessoa) pode devolver uma promessa { ok } da impressão do cupom.
+export default function VitaminQuiz({ questions, products, recommend, onComplete, onActiveChange, lookupPerson, idleResetMs = 0 }) {
   const [started, setStarted] = useState(false)
+  const [pessoa, setPessoa] = useState(null)
+  const [printState, setPrintState] = useState(null) // null | printing | done | failed
+  const askMatricula = Boolean(lookupPerson) && started && !pessoa
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
   const [pending, setPending] = useState(null)
@@ -112,7 +118,7 @@ export default function VitaminQuiz({ questions, products, recommend, onComplete
       setTransitioning(false)
     }).catch(() => {})
     return () => animation.cancel()
-  }, [started, step])
+  }, [started, step, pessoa])
 
   // A single owner coordinates exit -> state update -> entrance. Only user actions start motion.
   const transitionTo = (commit, direction = 1, selectedId = null) => {
@@ -156,17 +162,27 @@ export default function VitaminQuiz({ questions, products, recommend, onComplete
     }
     setAnswers(nextAnswers)
     setStep((value) => value + 1)
-    if (step === questions.length - 1) onComplete?.(nextAnswers, sessionRef.current)
+    if (step === questions.length - 1) {
+      const printing = onComplete?.(nextAnswers, sessionRef.current, pessoa)
+      if (printing?.then) {
+        setPrintState('printing')
+        printing.then((result) => setPrintState(result?.ok ? 'done' : result?.desligado ? null : 'failed'))
+      }
+    }
   }, 1, optionId)
 
   const goBack = () => transitionTo(() => {
-    if (step === 0) setStarted(false)
+    if (askMatricula) setStarted(false)
+    else if (step === 0 && lookupPerson) setPessoa(null)
+    else if (step === 0) setStarted(false)
     else setStep((value) => Math.max(0, value - 1))
   }, -1)
 
   const reset = () => transitionTo(() => {
     newSession()
     setStarted(true)
+    setPessoa(null)
+    setPrintState(null)
     setStep(0)
     setAnswers({})
   }, -1)
@@ -182,6 +198,8 @@ export default function VitaminQuiz({ questions, products, recommend, onComplete
       clearTimeout(timer)
       timer = setTimeout(() => transitionTo(() => {
         setStarted(false)
+        setPessoa(null)
+        setPrintState(null)
         setStep(0)
         setAnswers({})
       }, -1), idleResetMs)
@@ -207,9 +225,9 @@ export default function VitaminQuiz({ questions, products, recommend, onComplete
 
       <div className={`vq-layout ${started ? 'vq-layout--active' : ''}`}>
         <section className="vq-workspace" aria-label="Questionário de vitaminas">
-          <div className="vq-progress-header"><span>{complete ? 'Seu resultado' : started ? 'Vamos conhecer você' : 'Descubra sua vitamina'}</span><span>{started ? `${String(Math.min(step + 1, questions.length)).padStart(2, '0')} / ${String(questions.length).padStart(2, '0')}` : <><Icon name="clock" /> Cerca de 1 minuto</>}</span></div>
+          <div className="vq-progress-header"><span>{complete ? 'Seu resultado' : askMatricula ? 'Identificação' : started ? 'Vamos conhecer você' : 'Descubra sua vitamina'}</span><span>{askMatricula ? 'CONECTA 2026' : started ? `${String(Math.min(step + 1, questions.length)).padStart(2, '0')} / ${String(questions.length).padStart(2, '0')}` : <><Icon name="clock" /> Cerca de 1 minuto</>}</span></div>
           <div className="vq-progress" role="progressbar" aria-label="Perguntas respondidas" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={answeredCount} aria-valuetext={`${answeredCount} de ${questions.length} perguntas respondidas`}>
-            {questions.map((item, index) => <span key={item.id} className={`${index < step ? 'is-complete' : ''} ${started && index === step ? 'is-active' : ''}`} />)}
+            {questions.map((item, index) => <span key={item.id} className={`${index < step ? 'is-complete' : ''} ${started && !askMatricula && index === step ? 'is-active' : ''}`} />)}
           </div>
 
           <div className="vq-stage" ref={stageRef} aria-busy={transitioning}>
@@ -228,6 +246,8 @@ export default function VitaminQuiz({ questions, products, recommend, onComplete
                 <button className="vq-primary vq-primary--start" type="button" disabled={transitioning} onClick={() => transitionTo(() => { newSession(); setStarted(true) })}>INICIAR JÁ</button>
                 <p className="vq-start-note">No seu ritmo. Uma pergunta de cada vez.</p>
               </div>
+            ) : askMatricula ? (
+              <MatriculaStep key="matricula" lookup={lookupPerson} disabled={transitioning} onDone={(found) => transitionTo(() => setPessoa(found))} />
             ) : !complete ? (
               <div className="vq-question" key={question.id}>
                 <div className="vq-question-label"><span className="vq-section-icon"><Icon name={meta.icon} /></span><span className="vq-eyebrow">{meta.label}</span></div>
@@ -254,14 +274,14 @@ export default function VitaminQuiz({ questions, products, recommend, onComplete
             ) : (
               <div className="vq-result" key="result">
                 <div className="vq-question-label"><span className="vq-section-icon"><Icon name="check" /></span><span className="vq-eyebrow">SUAS RESPOSTAS, SEU RESULTADO</span></div>
-                <h1 tabIndex={-1}>Sua sugestão GoodLife.</h1>
+                <h1 tabIndex={-1}>{pessoa?.nome ? `${pessoa.nome.split(' ')[0].charAt(0)}${pessoa.nome.split(' ')[0].slice(1).toLowerCase()}, esta é a sua sugestão.` : 'Sua sugestão GoodLife.'}</h1>
                 {result?.product ? <>
                   <p className="vq-question-hint">Com base nas suas respostas, conheça esta opção da linha GoodLife.</p>
                   <article className="vq-recommendation">
                     <div className="vq-result-image"><img src={result.product.image} alt={result.product.name} width="300" height="300" /><span>SUA SUGESTÃO GOODLIFE</span></div>
                     <div className="vq-result-info"><span className="vq-eyebrow">{result.product.line}</span><h2>{result.product.name}</h2><p>{result.profile?.summary || result.product.description}</p><ul>{result.product.highlights.map((item) => <li key={item}><Icon name="check" />{item}</li>)}</ul></div>
                   </article>
-                  <div className="vq-result-actions"><button className="vq-primary" type="button" disabled={transitioning} onClick={reset}>Fazer nova pesquisa<Icon name="reset" /></button><button className="vq-text-button" type="button" disabled={transitioning} onClick={goBack}><Icon name="back" />Revisar respostas</button></div>
+                  <div className="vq-result-actions"><button className="vq-primary" type="button" disabled={transitioning} onClick={reset}>Fazer nova pesquisa<Icon name="reset" /></button><button className="vq-text-button" type="button" disabled={transitioning} onClick={goBack}><Icon name="back" />Revisar respostas</button>{printState && <p className={`vq-print vq-print--${printState}`} role="status"><Icon name={printState === 'failed' ? 'shield' : 'check'} />{printState === 'printing' ? 'Imprimindo seu cupom com mais 2 sugestões…' : printState === 'done' ? 'Pronto! Retire seu cupom na impressora.' : 'Não foi possível imprimir. Chame alguém da equipe.'}</p>}</div>
                 </> : <><p className="vq-question-hint">Não encontramos um produto disponível para apresentar agora. Você pode iniciar uma nova pesquisa.</p><button className="vq-primary" type="button" disabled={transitioning} onClick={reset}>Fazer nova pesquisa<Icon name="reset" /></button></>}
               </div>
             )}

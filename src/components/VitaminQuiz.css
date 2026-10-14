@@ -213,3 +213,10 @@
   .vq-stage { padding: 8px 0; }
   .vq-logo img, .vq-partner { height: 36px; }
 }
+
+/* Aviso da impressão do cupom, abaixo das ações do resultado. */
+.vq-print { flex-basis: 100%; margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; color: #e3f4fd; }
+.vq-print svg { width: 18px; height: 18px; }
+.vq-print--printing svg { animation: vq-print-pulse 1s ease-in-out infinite; }
+.vq-print--failed { color: #ffd2d2; }
+@keyframes vq-print-pulse { 50% { opacity: .3; } }

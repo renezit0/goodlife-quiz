@@ -84,7 +84,7 @@ function PinPad({ title, hint, error, onSubmit, onCancel, minLength = 4 }) {
   )
 }
 
-export default function SettingsPanel({ config, onClose, onSaved }) {
+export default function SettingsPanel({ config, onClose, onSaved, onTestPrint }) {
   const api = window.goodlife
   const [mode, setMode] = useState(config.temSenha ? 'unlock' : 'form')
   const [pinError, setPinError] = useState('')
@@ -93,7 +93,13 @@ export default function SettingsPanel({ config, onClose, onSaved }) {
     telaCheia: config.telaCheia,
     inatividadeSegundos: config.inatividadeSegundos,
     escala: config.escala,
+    imprimir: config.imprimir,
+    impressoras: config.impressoras || {},
   })
+  const [printers, setPrinters] = useState([])
+  const [participantes, setParticipantes] = useState(config.participantes)
+  const [rosterMessage, setRosterMessage] = useState('')
+  const [testMessage, setTestMessage] = useState('')
   const [newPin, setNewPin] = useState(undefined) // undefined = sem mudança, '' = remover
   const [saving, setSaving] = useState(false)
   const [confirmQuit, setConfirmQuit] = useState(false)
@@ -101,6 +107,26 @@ export default function SettingsPanel({ config, onClose, onSaved }) {
   const { limites } = config
   const layoutChanged = draft.telas !== config.telas || draft.telaCheia !== config.telaCheia
   const hasPin = newPin === undefined ? config.temSenha : Boolean(newPin)
+
+  useEffect(() => {
+    api?.listPrinters?.().then(setPrinters).catch(() => setPrinters([]))
+  }, [api])
+
+  const importRoster = async () => {
+    setRosterMessage('')
+    const info = await api.importRoster()
+    setParticipantes(info)
+    if (info.erro) setRosterMessage(info.erro)
+    else if (!info.cancelado) setRosterMessage(`Lista importada: ${info.total} pessoas.`)
+  }
+
+  const testPrint = async () => {
+    setTestMessage('Imprimindo…')
+    const result = await onTestPrint?.()
+    setTestMessage(result?.ok ? 'Cupom de teste enviado.' : result?.desligado ? 'Ligue a impressão e salve antes de testar.' : `Falhou: ${result?.erro || 'impressora indisponível'}`)
+  }
+
+  const setPrinter = (tela) => (event) => setDraft((current) => ({ ...current, impressoras: { ...current.impressoras, [tela]: event.target.value } }))
 
   // Painel esquecido aberto fecha sozinho para não ficar exposto ao público.
   useEffect(() => {
@@ -205,6 +231,36 @@ export default function SettingsPanel({ config, onClose, onSaved }) {
             <div><strong>Respostas</strong><span>{config.quizzesConcluidos} quiz{config.quizzesConcluidos === 1 ? '' : 'zes'} concluído{config.quizzesConcluidos === 1 ? '' : 's'}</span><span className="gs-path" title={config.arquivoRespostas}>{config.arquivoRespostas}</span></div>
             <button type="button" className="gs-secondary" onClick={() => api.openResponses()}>Abrir pasta</button>
           </div>
+          <div className="gs-row">
+            <div>
+              <strong>Participantes do CONECTA</strong>
+              <span>{participantes?.total ? `${participantes.total} pessoas · ${participantes.origem} · ${participantes.atualizadaEm}` : 'Nenhuma lista encontrada: a matrícula não mostra o nome.'}</span>
+              {rosterMessage && <span className="gs-hint">{rosterMessage}</span>}
+            </div>
+            <button type="button" className="gs-secondary" onClick={importRoster}>Importar lista</button>
+          </div>
+          <div className="gs-row">
+            <div><strong>Imprimir cupom</strong><span>Ao terminar o quiz, com a sugestão e mais 2</span></div>
+            <div className="gs-segmented" role="group" aria-label="Imprimir cupom">
+              <button type="button" aria-pressed={draft.imprimir} onClick={() => update('imprimir')(true)}>Ligado</button>
+              <button type="button" aria-pressed={!draft.imprimir} onClick={() => update('imprimir')(false)}>Desligado</button>
+            </div>
+          </div>
+          {draft.imprimir && Array.from({ length: draft.telas }, (_, index) => String(index + 1)).map((tela) => (
+            <div className="gs-row" key={tela}>
+              <div><strong>Impressora da tela {tela}</strong><span>Bobina térmica 80 mm</span></div>
+              <select className="gs-select" value={draft.impressoras[tela] || ''} onChange={setPrinter(tela)} aria-label={`Impressora da tela ${tela}`}>
+                <option value="">Padrão do Windows</option>
+                {printers.map((printer) => <option key={printer.name} value={printer.name}>{printer.displayName}{printer.isDefault ? ' (padrão)' : ''}</option>)}
+              </select>
+            </div>
+          ))}
+          {draft.imprimir && (
+            <div className="gs-row">
+              <div><strong>Teste de impressão</strong><span>{testMessage || 'Imprime um cupom de exemplo na impressora desta tela (já salva).'}</span></div>
+              <button type="button" className="gs-secondary" onClick={testPrint}>Imprimir teste</button>
+            </div>
+          )}
           {config.monitores > 1 && (
             <div className="gs-row">
               <div><strong>Toque das telas</strong><span>Se tocar numa tela mexe na outra, calibre: o Windows pede para tocar em cada tela uma vez.</span></div>
