@@ -1,0 +1,65 @@
+{
+  "name": "goodlife-quiz",
+  "productName": "GoodLife Quiz",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Descubra sua vitamina ideal - quiz GoodLife em várias telas simultâneas",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "vite build",
+    "start": "vite build && electron .",
+    "dist": "vite build && electron-builder --win nsis --publish never",
+    "release": "vite build && electron-builder --win nsis --publish always"
+  },
+  "build": {
+    "appId": "br.com.goodlife.quiz",
+    "productName": "GoodLife Quiz",
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "GoodLife Quiz",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "GoodLife-Quiz-Setup-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "renezit0",
+        "repo": "goodlife-quiz",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "dependencies": {
+    "@fontsource-variable/outfit": "^5.3.0",
+    "electron-updater": "^6.8.9",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^44.7.2",
+    "electron-builder": "^26.15.3",
+    "vite": "^7.3.7"
+  },
+  "repository": "https://github.com/renezit0/goodlife-quiz",
+  "author": "renezit0"
+}
