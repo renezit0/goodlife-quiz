@@ -88,6 +88,9 @@ administrador, então as atualizações também não pedem.
 `1.0.<número da execução>`. Não precisa mexer no `package.json` nem rodar nada local.
 Acompanhe em https://github.com/renezit0/goodlife-quiz/actions.
 
+Enquanto o app está aberto, o Windows não apaga a tela, não liga a proteção de tela e não
+suspende. Ao fechar o app, volta ao normal.
+
 O app instalado também abre sozinho quando o Windows liga, e um segundo clique no atalho
 não abre outro conjunto de telas.
 

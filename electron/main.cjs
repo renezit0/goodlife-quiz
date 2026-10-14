@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, powerSaveBlocker, screen, shell } = require('electron')
 const fs = require('node:fs')
 const path = require('node:path')
 const { setupAutoUpdater, installIfIdle, updateStatus } = require('./updater.cjs')
@@ -243,6 +243,9 @@ app.whenReady().then(() => {
   loadConfig()
   // Totem: abre sozinho quando o Windows liga (só no app instalado, não no npm start).
   if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: true })
+  // Enquanto o app está aberto, o Windows não apaga a tela, não liga a proteção de tela
+  // e não entra em suspensão. Ao fechar o app, o Windows volta ao normal.
+  powerSaveBlocker.start('prevent-display-sleep')
   openWindows()
   setupAutoUpdater({ isIdle: () => activeScreens.size === 0 })
 })
