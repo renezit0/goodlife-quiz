@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import VitaminQuiz from './components/VitaminQuiz'
-import SettingsPanel, { GearIcon } from './components/SettingsPanel'
+import SettingsPanel, { GearIcon, RestartIcon } from './components/SettingsPanel'
 import { buildProducts, getQuizRecommendation, quizQuestions } from './quiz/recommendation'
 
 // Cada janela do Electron é um processo próprio com o seu quiz: as telas não compartilham estado.
@@ -24,6 +24,8 @@ const saveResponse = (answers, sessionId) => {
 export default function App() {
   const [config, setConfig] = useState(fallbackConfig)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // Trocar a key remonta o quiz do zero: volta para a tela inicial desta tela.
+  const [quizKey, setQuizKey] = useState(0)
 
   useEffect(() => {
     if (!api?.getConfig) return undefined
@@ -41,6 +43,7 @@ export default function App() {
   return (
     <>
       <VitaminQuiz
+        key={quizKey}
         questions={quizQuestions}
         products={products}
         recommend={getQuizRecommendation}
@@ -48,6 +51,7 @@ export default function App() {
         onActiveChange={reportActive}
         idleResetMs={config.inatividadeSegundos * 1000}
       />
+      <button type="button" className="gs-gear gs-restart" aria-label="Reiniciar" onClick={() => setQuizKey((key) => key + 1)}><RestartIcon /></button>
       <button type="button" className="gs-gear" aria-label="Configurações" onClick={openSettings}><GearIcon /></button>
       {settingsOpen && <SettingsPanel config={config} onClose={closeSettings} onSaved={setConfig} />}
     </>

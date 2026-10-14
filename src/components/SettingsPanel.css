@@ -132,3 +132,8 @@
 
 /* Tela baixa: cabeçalho de 54px, a engrenagem cabe nele sem encostar na barra de progresso. */
 @media (max-height: 600px) { .gs-gear { top: 1px; right: 4px; } }
+
+/* Reiniciar: mesmo estilo da engrenagem, no canto oposto. */
+.gs-gear.gs-restart { right: auto; left: 10px; }
+.gs-gear.gs-restart:active { rotate: -60deg; }
+@media (max-height: 600px) { .gs-gear.gs-restart { left: 4px; } }

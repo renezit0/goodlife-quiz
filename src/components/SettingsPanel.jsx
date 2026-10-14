@@ -3,6 +3,14 @@ import './SettingsPanel.css'
 
 const PANEL_IDLE_MS = 90_000
 
+export function RestartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 10a9 9 0 1 1 2 8M3 4v6h6" />
+    </svg>
+  )
+}
+
 export function GearIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
