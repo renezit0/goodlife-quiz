@@ -83,17 +83,13 @@ configurações (engrenagem).
 O instalador (`GoodLife-Quiz-Setup-<versão>.exe`) instala só para o usuário, sem pedir
 administrador, então as atualizações também não pedem.
 
-Para lançar uma versão nova:
+**Lançar versão nova é automático:** todo push na `main` dispara o GitHub Actions
+(`.github/workflows/release.yml`), que gera o instalador e publica a release com a versão
+`1.0.<número da execução>`. Não precisa mexer no `package.json` nem rodar nada local.
+Acompanhe em https://github.com/renezit0/goodlife-quiz/actions.
 
-1. Suba o `version` no `package.json` (ex.: `1.0.0` → `1.0.1`). Sem isso o app não vê a versão como nova.
-2. Rode, no Git Bash:
-
-   ```bash
-   GH_TOKEN=$(gh auth token) npm run release
-   ```
-
-   Isso cria a release no GitHub com o instalador, o `.blockmap` e o `latest.yml`. As máquinas
-   do evento pegam a versão sozinhas em até 30 minutos (ou ao reabrir o app).
+O app instalado também abre sozinho quando o Windows liga, e um segundo clique no atalho
+não abre outro conjunto de telas.
 
 ## Estrutura
 

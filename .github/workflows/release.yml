@@ -1,0 +1,47 @@
+# A cada push na main: gera o instalador e publica uma release nova no GitHub.
+# A versão é 1.0.<número da execução>, então sempre sobe sozinha e os apps instalados
+# pegam a atualização sem ninguém mexer no package.json.
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Definir versão
+        shell: bash
+        run: npm version "1.0.$GITHUB_RUN_NUMBER" --no-git-tag-version
+
+      - name: Gerar e publicar
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # O upload para o GitHub às vezes falha no meio; tenta de novo antes de desistir.
+        run: |
+          npm run build
+          for attempt in 1 2 3; do
+            npx electron-builder --win nsis --publish always && exit 0
+            echo "Falha ao publicar (tentativa $attempt), tentando de novo..."
+            sleep 20
+          done
+          exit 1

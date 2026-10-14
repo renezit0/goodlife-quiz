@@ -5,6 +5,9 @@ const { setupAutoUpdater, installIfIdle, updateStatus } = require('./updater.cjs
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 
+// Abre sozinho com o Windows: se alguém clicar no atalho de novo, não abre um segundo conjunto de telas.
+if (!app.requestSingleInstanceLock()) app.exit(0)
+
 // Sem isto, o Windows congela a pintura e o toque de uma tela coberta por outra janela
 // (ex.: um aviso do sistema por cima), e o quiz daquela tela trava até ser descoberta.
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion')
@@ -230,6 +233,8 @@ ipcMain.handle('app:quit', () => app.quit())
 
 app.whenReady().then(() => {
   loadConfig()
+  // Totem: abre sozinho quando o Windows liga (só no app instalado, não no npm start).
+  if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: true })
   openWindows()
   setupAutoUpdater({ isIdle: () => activeScreens.size === 0 })
 })
