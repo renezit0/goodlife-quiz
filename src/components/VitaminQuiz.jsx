@@ -233,7 +233,7 @@ export default function VitaminQuiz({ questions, products, recommend, onComplete
                 <div className="vq-question-label"><span className="vq-section-icon"><Icon name={meta.icon} /></span><span className="vq-eyebrow">{meta.label}</span></div>
                 <h1 tabIndex={-1}>{meta.title}</h1>
                 <p className="vq-question-hint">{meta.hint}</p>
-                <div className={`vq-options ${question.options.length >= 5 ? 'vq-options--many' : question.options.length === 4 ? 'vq-options--four' : ''}`} style={{ '--option-count': question.options.length, '--rows-2col': Math.ceil(question.options.length / 2) }} role="group" aria-label={meta.title}>
+                <div className="vq-options" style={{ '--option-count': question.options.length }} role="group" aria-label={meta.title}>
                   {question.options.map((option, index) => <button
                     key={option.id}
                     type="button"

@@ -146,6 +146,9 @@ function createQuizWindow(index, count) {
     },
   })
   win.setMenu(null)
+  // Arrastar uma imagem ou link com o dedo nunca troca a página do quiz.
+  win.webContents.on('will-navigate', (event) => event.preventDefault())
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   const contentsId = win.webContents.id
   win.on('closed', () => activeScreens.delete(contentsId))
   win.webContents.on('did-finish-load', () => {

@@ -3,8 +3,8 @@
   z-index: 20;
   top: max(10px, env(safe-area-inset-top, 0px));
   right: 10px;
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   display: grid;
   place-items: center;
   border: 0;
@@ -129,3 +129,6 @@
   .gs-segmented button { min-height: 32px; }
   .gs-primary, .gs-secondary, .gs-danger, .gs-link { min-height: 36px; }
 }
+
+/* Tela baixa: cabeçalho de 54px, a engrenagem cabe nele sem encostar na barra de progresso. */
+@media (max-height: 600px) { .gs-gear { top: 1px; right: 4px; } }
