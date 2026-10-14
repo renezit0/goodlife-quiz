@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('goodlife', {
   saveConfig: (patch) => ipcRenderer.invoke('config:save', patch),
   openResponses: () => ipcRenderer.invoke('app:open-responses'),
   quit: () => ipcRenderer.invoke('app:quit'),
+  calibrateTouch: () => ipcRenderer.invoke('touch:calibrate'),
   onConfigChanged: (callback) => {
     const listener = (_event, config) => callback(config)
     ipcRenderer.on('config:changed', listener)

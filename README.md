@@ -69,8 +69,13 @@ Se o `npm start` reclamar que o Electron não está instalado, rode
 
 ## Telas touch
 
-Com dois monitores touch no Windows, confira se cada toque cai no monitor certo:
-Painel de Controle → "Configurações do Tablet PC" → **Configurar** e toque na tela indicada.
+Sem configuração, o Windows manda o toque de todos os monitores touch para a tela principal
+(tocar na tela 2 mexe no quiz da tela 1). O app resolve sozinho: ao abrir com 2 ou mais monitores
+e o toque ainda não associado, ele fecha as telas, abre a calibração do Windows ("toque nesta tela
+para identificá-la"), e reabre o quiz quando terminar. Toque em cada tela quando o Windows pedir;
+se aparecer o aviso de administrador, confirme. Isso acontece uma vez por conjunto de monitores.
+
+Para refazer (trocou um monitor de porta, por exemplo): engrenagem → **Toque das telas → Calibrar**.
 
 ## Atualização automática
 

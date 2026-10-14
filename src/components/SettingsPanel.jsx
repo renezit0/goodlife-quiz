@@ -205,6 +205,12 @@ export default function SettingsPanel({ config, onClose, onSaved }) {
             <div><strong>Respostas</strong><span>{config.quizzesConcluidos} quiz{config.quizzesConcluidos === 1 ? '' : 'zes'} concluído{config.quizzesConcluidos === 1 ? '' : 's'}</span><span className="gs-path" title={config.arquivoRespostas}>{config.arquivoRespostas}</span></div>
             <button type="button" className="gs-secondary" onClick={() => api.openResponses()}>Abrir pasta</button>
           </div>
+          {config.monitores > 1 && (
+            <div className="gs-row">
+              <div><strong>Toque das telas</strong><span>Se tocar numa tela mexe na outra, calibre: o Windows pede para tocar em cada tela uma vez.</span></div>
+              <button type="button" className="gs-secondary" onClick={() => api.calibrateTouch()}>Calibrar</button>
+            </div>
+          )}
         </div>
 
         {config.versao && <p className="gs-note">Versão {config.versao} · {updateLabel(config.atualizacao)}</p>}

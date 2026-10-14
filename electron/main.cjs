@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, powerSaveBlocker, screen, shell } = require
 const fs = require('node:fs')
 const path = require('node:path')
 const { setupAutoUpdater, installIfIdle, updateStatus } = require('./updater.cjs')
+const touch = require('./touch.cjs')
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 
@@ -17,7 +18,7 @@ const argJanela = process.argv.includes('--janela')
 
 // ---------- Configuração (engrenagem no canto da tela) ----------
 
-const defaults = { telas: 2, telaCheia: true, inatividadeSegundos: 60, escala: 100, senha: '' }
+const defaults = { telas: 2, telaCheia: true, inatividadeSegundos: 60, escala: 100, senha: '', toqueCalibradoPara: '' }
 const limits = { telas: [1, 4], inatividadeSegundos: [15, 600], escala: [70, 150] }
 const configFile = () => process.env.GOODLIFE_CONFIG || path.join(app.getPath('userData'), 'config.json')
 let config = { ...defaults }
@@ -34,6 +35,7 @@ function sanitize(raw) {
     inatividadeSegundos: clamp(raw.inatividadeSegundos, limits.inatividadeSegundos, defaults.inatividadeSegundos),
     escala: clamp(raw.escala, limits.escala, defaults.escala),
     senha: typeof raw.senha === 'string' && /^\d{4,8}$/.test(raw.senha) ? raw.senha : '',
+    toqueCalibradoPara: typeof raw.toqueCalibradoPara === 'string' ? raw.toqueCalibradoPara : '',
   }
 }
 
@@ -239,6 +241,40 @@ ipcMain.handle('app:open-responses', () => {
 
 ipcMain.handle('app:quit', () => app.quit())
 
+// ---------- Toque em vários monitores ----------
+
+// As telas do quiz ficam em tela cheia por cima de tudo e esconderiam a ferramenta do Windows:
+// fecha as telas, calibra e reabre.
+let calibrating = false
+async function calibrateTouch() {
+  if (calibrating) return
+  calibrating = true
+  const previous = windows
+  windows = []
+  activeScreens.clear()
+  // Mantém o app vivo sem janelas enquanto a ferramenta do Windows está aberta.
+  app.removeListener('window-all-closed', quitWhenNoWindows)
+  previous.forEach((win) => !win.isDestroyed() && win.destroy())
+  try {
+    await touch.calibrate()
+    config.toqueCalibradoPara = touch.displaysSignature()
+    saveConfig()
+  } finally {
+    calibrating = false
+    openWindows()
+    app.on('window-all-closed', quitWhenNoWindows)
+  }
+}
+
+ipcMain.handle('touch:calibrate', () => { setTimeout(calibrateTouch, 150) })
+
+// Pede a calibração sozinho uma vez para cada conjunto de monitores (se a pessoa pular,
+// não insiste a cada reinício; dá para refazer pela engrenagem).
+async function calibrateIfNeeded() {
+  if (!app.isPackaged || config.toqueCalibradoPara === touch.displaysSignature()) return
+  if (await touch.needsCalibration()) await calibrateTouch()
+}
+
 app.whenReady().then(() => {
   loadConfig()
   // Totem: abre sozinho quando o Windows liga (só no app instalado, não no npm start).
@@ -248,6 +284,8 @@ app.whenReady().then(() => {
   powerSaveBlocker.start('prevent-display-sleep')
   openWindows()
   setupAutoUpdater({ isIdle: () => activeScreens.size === 0 })
+  calibrateIfNeeded().catch((error) => console.error('Falha ao verificar o toque:', error))
 })
 
-app.on('window-all-closed', () => app.quit())
+const quitWhenNoWindows = () => app.quit()
+app.on('window-all-closed', quitWhenNoWindows)
