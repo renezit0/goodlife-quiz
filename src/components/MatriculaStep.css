@@ -60,6 +60,7 @@
 @keyframes mt-pop { from { scale: .6; opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .mt-caret, .mt-shake, .mt-avatar { animation: none; } }
 
+/* .vq svg fixa 22px em todo o quiz: aqui o símbolo acompanha o tamanho do círculo. */
 /* Insígnia do time (deus do CONECTA): círculo na cor da mitologia, símbolo branco, aro claro para
    destacar do azul do fundo. Cores iguais às do CONECTA Check-in. */
 .mt-insignia--grega { --mito: #007aff; }
@@ -67,6 +68,6 @@
 .mt-insignia--romana { --mito: #ff3b30; }
 .mt-insignia--staff { --mito: #ff2d55; }
 .mt-insignia { background: var(--mito); color: #fff; box-shadow: 0 0 0 clamp(3px, .8cqh, 6px) #ffffffd9, 0 14px 34px #003d6455; }
-.mt-insignia svg { width: 50%; height: 50%; }
+.vq .mt-insignia svg { width: 52%; height: 52%; }
 .mt-tag-time i { display: grid; place-items: center; flex: none; width: 1.55em; height: 1.55em; margin-left: -.6em; border-radius: 50%; background: var(--mito); color: #fff; }
-.mt-tag-time i svg { width: 62%; height: 62%; }
+.vq .mt-tag-time i svg { width: 64%; height: 64%; }

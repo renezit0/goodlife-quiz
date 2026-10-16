@@ -9,26 +9,25 @@ export const quizQuestions = [
   {
     id: 'goal', label: 'Seu objetivo', icon: 'spark',
     title: 'O que você mais quer cuidar hoje?', hint: 'Escolha o seu principal objetivo neste momento.',
+    // 5 objetivos (poucas opções na tela); a pergunta seguinte separa cada caso.
     options: [
-      { id: 'energia', label: 'Energia e disposição', icon: 'bolt' },
+      { id: 'energia', label: 'Energia e foco', icon: 'bolt' },
       { id: 'imunidade', label: 'Imunidade', icon: 'shield' },
       { id: 'sono', label: 'Sono e relaxamento', icon: 'moon' },
       { id: 'beleza', label: 'Pele, cabelo e unhas', icon: 'spark' },
-      { id: 'ossos', label: 'Ossos e articulações', icon: 'activity' },
-      { id: 'mente', label: 'Coração e cérebro', icon: 'heart' },
-      { id: 'base', label: 'Só quero me cuidar no dia a dia', icon: 'leaf' },
+      { id: 'corpo', label: 'Ossos, músculos e coração', icon: 'activity' },
     ],
   },
   {
     id: 'focus', label: 'Mais detalhes', icon: 'spark', dependsOn: 'goal',
     variants: {
       energia: {
-        title: 'Quando o cansaço pesa mais?', hint: 'Pense no momento do dia em que você mais sente.',
+        title: 'O que mais pesa no seu dia?', hint: 'Escolha o que você mais sente.',
         options: [
           { id: 'energia-acordar', label: 'Já acordo cansado', icon: 'sun' },
-          { id: 'energia-tarde', label: 'Depois do almoço', icon: 'clock' },
-          { id: 'energia-dia', label: 'O dia inteiro', icon: 'bolt' },
-          { id: 'energia-treino', label: 'Depois do treino', icon: 'activity' },
+          { id: 'energia-tarde', label: 'Cansaço depois do almoço', reasonLabel: 'Depois do almoço', icon: 'clock' },
+          { id: 'energia-dia', label: 'Cansado o dia inteiro', reasonLabel: 'O dia inteiro', icon: 'bolt' },
+          { id: 'energia-foco', label: 'Falta de foco e memória', icon: 'spark' },
           nenhum('energia-nenhum'),
         ],
       },
@@ -61,32 +60,14 @@ export const quizQuestions = [
           { id: 'beleza-tudo', label: 'Um pouco de tudo', icon: 'heart' },
         ],
       },
-      ossos: {
+      corpo: {
         title: 'O que mais se parece com você?', hint: 'Escolha o que mais combina com o seu corpo hoje.',
         options: [
-          { id: 'ossos-articulacoes', label: 'Dor ou rigidez nas articulações', icon: 'activity' },
-          { id: 'ossos-prevenir', label: 'Quero ossos fortes no futuro', icon: 'shield' },
-          { id: 'ossos-caimbras', label: 'Câimbras e músculos cansados', icon: 'bolt' },
-          { id: 'ossos-sol', label: 'Pego pouco sol', icon: 'sun' },
-          nenhum('ossos-nenhum'),
-        ],
-      },
-      mente: {
-        title: 'Qual cuidado é a sua prioridade?', hint: 'Escolha o que mais pesa para você.',
-        options: [
-          { id: 'mente-memoria', label: 'Memória e esquecimentos', icon: 'spark' },
-          { id: 'mente-foco', label: 'Foco e concentração', icon: 'bolt' },
-          { id: 'mente-coracao', label: 'Saúde do coração', icon: 'heart' },
-          { id: 'mente-olhos', label: 'Olhos cansados de tela', icon: 'sun' },
-          nenhum('mente-nenhum'),
-        ],
-      },
-      base: {
-        title: 'Como está a sua alimentação?', hint: 'Seja sincero: ninguém mais vê a resposta.',
-        options: [
-          { id: 'base-pulo', label: 'Pulo refeições com frequência', icon: 'clock' },
-          { id: 'base-pouca', label: 'Como pouca fruta e verdura', icon: 'leaf' },
-          { id: 'base-bem', label: 'Como bem, quero só reforçar', icon: 'check' },
+          { id: 'corpo-articulacoes', label: 'Dor ou rigidez nas articulações', icon: 'activity' },
+          { id: 'corpo-ossos', label: 'Quero ossos fortes no futuro', icon: 'shield' },
+          { id: 'corpo-musculos', label: 'Câimbras ou músculos cansados', icon: 'bolt' },
+          { id: 'corpo-coracao', label: 'Cuidar do coração', icon: 'heart' },
+          nenhum('corpo-nenhum'),
         ],
       },
     },
@@ -111,8 +92,7 @@ export const quizQuestions = [
     ],
   },
   {
-    // Quem marcou "Depois do treino" no detalhe já contou que treina.
-    id: 'activity', label: 'Seu movimento', icon: 'activity', skipWhen: (a) => a.focus === 'energia-treino',
+    id: 'activity', label: 'Seu movimento', icon: 'activity',
     title: 'E a atividade física?', hint: 'Pense numa semana normal sua.',
     options: [
       { id: 'sedentary', label: 'Quase não me exercito', reasonLabel: 'Pouco movimento', icon: 'leaf' },
@@ -124,10 +104,10 @@ export const quizQuestions = [
     id: 'routine', label: 'Sua rotina', icon: 'leaf',
     title: 'Como tem sido o seu dia a dia?', hint: 'Escolha a frase que mais se aproxima da sua rotina.',
     options: [
-      { id: 'rush', label: 'Dia corrido e alimentação irregular', icon: 'activity', skipWhen: (a) => a.focus === 'base-pulo' },
+      { id: 'rush', label: 'Dia corrido e alimentação irregular', icon: 'activity' },
       { id: 'stress', label: 'Muito estresse e cansaço mental', icon: 'moon', skipWhen: (a) => a.focus === 'sono-cabeca' },
-      { id: 'screens', label: 'Passo o dia em frente a telas', icon: 'sun', skipWhen: (a) => a.focus === 'mente-olhos' },
-      { id: 'sun', label: 'Fico pouco no sol', icon: 'sun', skipWhen: (a) => a.focus === 'imun-sol' || a.focus === 'ossos-sol' },
+      { id: 'screens', label: 'Passo o dia em frente a telas', icon: 'sun' },
+      { id: 'sun', label: 'Fico pouco no sol', icon: 'sun', skipWhen: (a) => a.focus === 'imun-sol' },
       nenhum('none', 'Nenhuma dessas'),
     ],
   },
