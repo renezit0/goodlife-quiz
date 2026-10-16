@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('goodlife', {
   quit: () => ipcRenderer.invoke('app:quit'),
   calibrateTouch: () => ipcRenderer.invoke('touch:calibrate'),
   lookupPerson: (matricula) => ipcRenderer.invoke('roster:lookup', matricula),
+  searchPerson: (term) => ipcRenderer.invoke('roster:search', term),
   rosterInfo: () => ipcRenderer.invoke('roster:info'),
   importRoster: () => ipcRenderer.invoke('roster:import'),
   importSexo: () => ipcRenderer.invoke('sexo:import'),

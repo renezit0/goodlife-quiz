@@ -164,4 +164,11 @@ function startAutoSync() {
   setInterval(() => { if (status().conectado) sync().catch(() => {}) }, SYNC_INTERVAL_MS)
 }
 
-module.exports = { login, logout, sync, lookupOnline, status, startAutoSync, rosterFile }
+// Busca online por nome (pelo menos 2 letras), para quem ainda não está na lista baixada.
+async function searchOnline(term) {
+  if (!current().token && !current().rememberToken) return []
+  const result = await request('GET', `/conecta/colaborador-busca?termo=${encodeURIComponent(term)}`, undefined, { timeoutMs: 5000 })
+  return result.ok && Array.isArray(result.data?.colaboradores) ? result.data.colaboradores : []
+}
+
+module.exports = { login, logout, sync, lookupOnline, searchOnline, status, startAutoSync, rosterFile }

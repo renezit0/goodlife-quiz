@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { mitologia, nomeMitologia, svgInsignia, temInsignia } from '../conecta/insignias'
+import NameSearch from './NameSearch'
 import './MatriculaStep.css'
 
 const MAX_DIGITS = 8
@@ -20,9 +21,12 @@ function KeyIcon({ name }) {
 
 // Identificação do participante do CONECTA antes das perguntas.
 // lookup(matricula) → pessoa da lista ou null. onDone({ matricula, nome, loja, time } | null).
-export default function MatriculaStep({ lookup, onDone, disabled }) {
+// search(nome) → pessoas: quem não sabe a matrícula digita 1 e procura pelo nome.
+const MATRICULA_BUSCA = '1'
+
+export default function MatriculaStep({ lookup, search, onDone, disabled }) {
   const [digits, setDigits] = useState('')
-  const [state, setState] = useState('typing') // typing | searching | found | missing
+  const [state, setState] = useState('typing') // typing | searching | found | missing | name
   const [person, setPerson] = useState(null)
   const [shake, setShake] = useState(0)
 
@@ -41,6 +45,11 @@ export default function MatriculaStep({ lookup, onDone, disabled }) {
 
   const confirm = async () => {
     if (!digits) return
+    if (digits === MATRICULA_BUSCA && search) {
+      setDigits('')
+      setState('name')
+      return
+    }
     setState('searching')
     const found = await Promise.resolve(lookup?.(digits)).catch(() => null)
     if (found) {
@@ -55,7 +64,7 @@ export default function MatriculaStep({ lookup, onDone, disabled }) {
   // Teclado físico (USB) também funciona: números, Backspace e Enter.
   useEffect(() => {
     const onKey = (event) => {
-      if (state === 'found') return
+      if (state === 'found' || state === 'name') return
       if (/^\d$/.test(event.key)) press(event.key)
       else if (event.key === 'Backspace') press('apagar')
       else if (event.key === 'Enter') press('ok')
@@ -63,6 +72,17 @@ export default function MatriculaStep({ lookup, onDone, disabled }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
+
+  if (state === 'name') {
+    return (
+      <NameSearch
+        search={search}
+        disabled={disabled}
+        onBack={() => setState('typing')}
+        onPick={(found) => { setPerson(found); setDigits(found.matricula); setState('found') }}
+      />
+    )
+  }
 
   if (state === 'found' && person) {
     return (
@@ -103,6 +123,7 @@ export default function MatriculaStep({ lookup, onDone, disabled }) {
         <p className={`mt-message ${state === 'missing' ? 'is-error' : ''}`}>
           {state === 'missing' ? `Não encontramos a matrícula ${digits}.` : state === 'searching' ? 'Procurando…' : 'É o número do seu crachá do CONECTA.'}
         </p>
+        {search && <p className="mt-hint">Não sabe? Digite <b>1</b> e procure pelo nome.</p>}
         {state === 'missing' && (
           <button type="button" className="vq-text-button mt-skip" disabled={disabled} onClick={() => onDone({ matricula: digits, nome: '', loja: '', time: '' })}>Continuar assim mesmo</button>
         )}

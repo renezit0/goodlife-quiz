@@ -1,0 +1,62 @@
+/* Busca pelo nome: campo e resultados + teclado de letras com as mesmas teclas translúcidas do
+   teclado da matrícula. Tamanhos pela altura/largura do palco (.vq-stage é container), sem rolagem.
+   Tela alta: tudo empilhado. Tela larga e baixa: resultados à esquerda, teclado à direita. */
+.ns { --k: clamp(30px, min(8.4cqw, 6.6cqh), 66px); --g: clamp(4px, calc(var(--k) * .14), 9px); height: 100%; display: grid; grid-template-rows: auto auto; gap: clamp(14px, 3cqh, 36px); align-content: center; }
+.ns-side { min-height: 0; display: flex; flex-direction: column; gap: clamp(8px, 1.6cqh, 14px); width: min(100%, 640px); margin: 0 auto; }
+.ns-head { flex: none; display: flex; align-items: center; gap: 12px; }
+.ns h1 { flex: 1; margin: 0; font-weight: 500; font-size: clamp(22px, 5cqh, 38px); line-height: 1.1; letter-spacing: -.035em; text-align: center; padding-right: 48px; }
+.ns-back { flex: none; width: 48px; height: 48px; border: 0; border-radius: 50%; display: grid; place-items: center; background: #ffffff1f; color: #fff; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.ns-back:active { background: #ffffff59; scale: .94; }
+.vq .ns-back svg { width: 22px; height: 22px; }
+
+.ns-field { flex: none; display: flex; align-items: center; gap: 10px; height: clamp(48px, 8cqh, 64px); padding: 0 22px; border-radius: 999px; background: #ffffff1c; border: 1px solid #ffffff3d; box-shadow: inset 0 1px 0 #ffffff26; backdrop-filter: blur(12px); }
+.vq .ns-field svg { width: 22px; height: 22px; color: #cde8f7; }
+.ns-text { font-size: clamp(18px, 3.6cqh, 26px); font-weight: 500; letter-spacing: .04em; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
+.ns-placeholder { font-size: clamp(16px, 3cqh, 20px); color: #cfe8f6; font-weight: 300; }
+.ns-caret { flex: none; width: 2px; height: 42%; margin: 0 -6px; background: #9fe0ff; border-radius: 2px; animation: mt-caret 1.05s steps(1) infinite; }
+
+.ns-results { min-height: 0; display: flex; flex-direction: column; gap: clamp(6px, 1.2cqh, 10px); overflow: hidden; }
+.ns-message { margin: 4px 0 0; text-align: center; font-size: clamp(14px, 2.6cqh, 17px); color: #d6edf9; font-weight: 300; }
+.ns-person { flex: none; display: flex; align-items: center; gap: 12px; min-height: clamp(48px, 8.6cqh, 66px); padding: 6px 14px 6px 8px; border: 0; border-radius: 16px; background: #fff; color: #0b6092; text-align: left; box-shadow: 0 6px 16px #003b6314; touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: scale .12s, background-color .16s; animation: ns-in .28s cubic-bezier(.16, 1, .3, 1) both; }
+.ns-person:active:not(:disabled) { scale: .98; background: #e9f7ff; transition-duration: 0s; }
+.ns-person:nth-child(2) { animation-delay: .03s; }
+.ns-person:nth-child(3) { animation-delay: .06s; }
+.ns-person:nth-child(4) { animation-delay: .09s; }
+.ns-person-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ns-person-text strong { font-size: clamp(15px, 2.8cqh, 19px); font-weight: 600; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ns-person-text small { font-size: clamp(12px, 2.2cqh, 14px); color: #55717e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vq .ns-person > svg { width: 20px; height: 20px; color: #8bb4c9; }
+.ns-badge { flex: none; width: clamp(36px, 6.4cqh, 46px); height: clamp(36px, 6.4cqh, 46px); border-radius: 50%; display: grid; place-items: center; background: var(--mito, #0b679c); color: #fff; }
+.vq .ns-badge svg { width: 52%; height: 52%; }
+.ns-badge--initials { background: #edf7fc; color: #1372a5; font-size: 15px; font-weight: 600; }
+
+.ns-keyboard { display: flex; flex-direction: column; align-items: center; gap: var(--g); }
+.ns-row { display: flex; justify-content: center; gap: var(--g); }
+.ns-key { width: var(--k); height: calc(var(--k) * 1.08); border: 0; border-radius: calc(var(--k) * .26); display: grid; place-items: center; background: #ffffff26; color: #fff; font-size: calc(var(--k) * .42); font-weight: 500; line-height: 1; box-shadow: inset 0 1px 0 #ffffff33; backdrop-filter: blur(14px); touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: background-color .25s, scale .25s; }
+.ns-key:active:not(:disabled) { background: #ffffffb3; color: #0b679c; scale: .92; transition-duration: 0s; }
+.ns-key:disabled { opacity: .35; }
+.ns-key--fn { width: calc(var(--k) * 1.6); background: #ffffff14; }
+.vq .ns-key--fn svg { width: 46%; height: 46%; }
+.ns-key--space { width: calc(var(--k) * 6); font-size: calc(var(--k) * .3); font-weight: 400; letter-spacing: .04em; }
+
+/* Tela larga e baixa (ex.: 1160×521): resultados à esquerda, teclado à direita. */
+/* Estreita e baixa: a lista encolhe para o teclado caber. */
+@container (width <= 700px) and (height < 640px) {
+  .ns { grid-template-rows: minmax(0, 1fr) auto; }
+  .ns-person:nth-child(n+3) { display: none; }
+}
+@container (width <= 700px) and (height < 420px) {
+  .ns-person:nth-child(n+2) { display: none; }
+}
+@container (width > 700px) and (height < 640px) {
+  .ns { --k: clamp(32px, min(5.1cqw, 12.5cqh), 62px); --g: clamp(4px, calc(var(--k) * .12), 8px); grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: minmax(0, 1fr); align-items: center; gap: clamp(20px, 4cqw, 56px); }
+  .ns-side { height: 100%; justify-content: center; }
+  .ns h1 { text-align: left; padding-right: 0; }
+}
+/* Pouca altura para a lista: mostra os 3 primeiros resultados. */
+@container (height < 470px) {
+  .ns-person:nth-child(n+4) { display: none; }
+}
+
+@keyframes ns-in { from { opacity: 0; translate: 0 6px; } }
+@media (prefers-reduced-motion: reduce) { .ns-person, .ns-caret { animation: none; } }

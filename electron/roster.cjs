@@ -147,4 +147,26 @@ function importFrom(filePath) {
   return info()
 }
 
-module.exports = { lookup, info, importFrom, matriculaKey, person }
+// Busca pelo nome, para quem não sabe a matrícula (digita 1 no teclado da matrícula).
+// Todas as palavras digitadas precisam aparecer no nome (sem acento, em qualquer ordem);
+// quem começa pela primeira palavra vem antes. Devolve no máximo `limit` pessoas.
+const semAcento = (value) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+
+function search(term, limit = 6) {
+  const words = semAcento(term).split(/\s+/).filter((word) => word.length >= 2)
+  if (!words.length) return []
+  return Object.values(load().people)
+    .map((pessoa) => {
+      const nome = semAcento(pessoa.nome)
+      const parts = nome.split(/\s+/)
+      if (!words.every((word) => parts.some((part) => part.startsWith(word)) || nome.includes(word))) return null
+      const score = (parts[0].startsWith(words[0]) ? 0 : 1) + words.filter((word) => !parts.some((part) => part.startsWith(word))).length
+      return { pessoa, score, nome }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.score - b.score || a.nome.localeCompare(b.nome, 'pt-BR'))
+    .slice(0, limit)
+    .map(({ pessoa }) => lookup(pessoa.matricula))
+}
+
+module.exports = { lookup, search, info, importFrom, matriculaKey, person }

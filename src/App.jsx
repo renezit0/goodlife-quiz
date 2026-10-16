@@ -13,6 +13,7 @@ const reportActive = (active) => api?.setQuizActive?.(active)
 const fallbackConfig = { inatividadeSegundos: 60 }
 
 const lookupPerson = api?.lookupPerson ? (matricula) => api.lookupPerson(matricula) : undefined
+const searchPerson = api?.searchPerson ? (term) => api.searchPerson(term) : undefined
 
 // Com a idade no cadastro do CONECTA e o sexo na planilha importada, essas respostas vêm prontas
 // e as perguntas de idade e de Homem/Mulher não aparecem.
@@ -112,6 +113,7 @@ export default function App() {
         recommend={recommend}
         onComplete={finishQuiz}
         lookupPerson={lookupPerson}
+        searchPerson={searchPerson}
         fixedAnswers={fixedAnswers}
         onActiveChange={reportActive}
         idleResetMs={config.inatividadeSegundos * 1000}

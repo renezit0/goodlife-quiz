@@ -305,6 +305,15 @@ ipcMain.handle('app:quit', () => app.quit())
 // Primeiro a lista no computador (instantâneo, funciona sem internet); se não achar, pergunta à API.
 // O sexo vem da API do CONECTA; se não vier, da planilha importada pela engrenagem (sexo.cjs).
 const withSexo = (pessoa) => pessoa && { ...pessoa, sexo: pessoa.sexo || sexo.of(pessoa.matricula) }
+// Busca por nome: a lista no computador primeiro; se não achar ninguém, a API do CONECTA.
+ipcMain.handle('roster:search', async (_event, term) => {
+  const text = String(term ?? '').trim().slice(0, 60)
+  if (text.replace(/\s/g, '').length < 3) return []
+  const local = roster.search(text)
+  if (local.length) return local.map(withSexo)
+  const online = await conecta.searchOnline(text).catch(() => [])
+  return online.map((raw) => roster.person(raw)).filter(Boolean).slice(0, 6).map(withSexo)
+})
 ipcMain.handle('roster:lookup', async (_event, matricula) => {
   const local = roster.lookup(matricula)
   if (local) return withSexo(local)

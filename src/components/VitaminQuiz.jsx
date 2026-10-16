@@ -41,7 +41,7 @@ function Icon({ name, className = '' }) {
 // pode devolver uma promessa { ok } da impressão do cupom.
 // fixedAnswers(pessoa): respostas que já vêm do cadastro (a idade, pela matrícula); a pergunta
 // delas não aparece.
-export default function VitaminQuiz({ questions: questionList, resolveQuestions, products, recommend, onComplete, onActiveChange, lookupPerson, fixedAnswers, idleResetMs = 0 }) {
+export default function VitaminQuiz({ questions: questionList, resolveQuestions, products, recommend, onComplete, onActiveChange, lookupPerson, searchPerson, fixedAnswers, idleResetMs = 0 }) {
   const [started, setStarted] = useState(false)
   const [pessoa, setPessoa] = useState(null)
   const [printState, setPrintState] = useState(null) // null | printing | done | failed
@@ -242,7 +242,7 @@ export default function VitaminQuiz({ questions: questionList, resolveQuestions,
                 <p className="vq-start-note">No seu ritmo. Uma pergunta de cada vez.</p>
               </div>
             ) : askMatricula ? (
-              <MatriculaStep key="matricula" lookup={lookupPerson} disabled={transitioning} onDone={(found) => transitionTo(() => setPessoa(found))} />
+              <MatriculaStep key="matricula" lookup={lookupPerson} search={searchPerson} disabled={transitioning} onDone={(found) => transitionTo(() => setPessoa(found))} />
             ) : !complete ? (
               <div className="vq-question" key={question.id}>
                 <div className="vq-question-label"><span className="vq-section-icon"><Icon name={meta.icon} /></span><span className="vq-eyebrow">{meta.label}</span></div>
