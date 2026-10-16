@@ -18,9 +18,18 @@ contextBridge.exposeInMainWorld('goodlife', {
   conectaLogout: () => ipcRenderer.invoke('conecta:logout'),
   listPrinters: () => ipcRenderer.invoke('printer:list'),
   printReceipt: (html) => ipcRenderer.invoke('print:receipt', html),
+  openResponsesDay: (arquivo) => ipcRenderer.invoke('app:open-responses-day', arquivo),
+  getStock: () => ipcRenderer.invoke('estoque:get'),
+  takeStock: (request) => ipcRenderer.invoke('estoque:take', request),
+  updateStock: (patch) => ipcRenderer.invoke('estoque:update', patch),
   onConfigChanged: (callback) => {
     const listener = (_event, config) => callback(config)
     ipcRenderer.on('config:changed', listener)
     return () => ipcRenderer.removeListener('config:changed', listener)
+  },
+  onStockChanged: (callback) => {
+    const listener = (_event, snapshot) => callback(snapshot)
+    ipcRenderer.on('estoque:changed', listener)
+    return () => ipcRenderer.removeListener('estoque:changed', listener)
   },
 })

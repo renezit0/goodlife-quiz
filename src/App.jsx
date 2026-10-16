@@ -20,9 +20,27 @@ const fixedAnswers = (pessoa) => {
   return age ? { age } : {}
 }
 
-// Grava a resposta e imprime o cupom (sugestão principal + 2). Devolve o resultado da impressão.
-const finishQuiz = (answers, sessionId, pessoa) => {
-  const result = getQuizRecommendation(products, answers)
+// Estoque do evento: a quantidade da planilha (evento.js) e o saldo guardado pelo app, que vale
+// para todas as telas deste computador (electron/estoque.cjs) e chega aqui a cada mudança.
+const stockDefaults = Object.fromEntries(products.map((product) => [product.code, product.qtde || 0]))
+let stock = { ativo: false, saldo: {}, sessoes: {} }
+const stockOf = (code, snapshot = stock) => snapshot.saldo?.[code] ?? stockDefaults[code] ?? 0
+
+// Sem estoque = saldo zero, menos o produto que esta mesma sessão já levou ("Revisar respostas").
+const recommend = (list, answers, sessionId) => {
+  const mine = stock.sessoes?.[sessionId]
+  const indisponiveis = new Set(stock.ativo ? list.filter((p) => p.code !== mine && stockOf(p.code) <= 0).map((p) => p.code) : [])
+  return getQuizRecommendation(list, answers, { indisponiveis })
+}
+
+// Grava a resposta, baixa 1 unidade da sugestão principal e imprime o cupom (sugestão + 2).
+// Devolve o resultado da impressão.
+const finishQuiz = (answers, sessionId, pessoa, result) => {
+  if (stock.ativo && result.product && api?.takeStock) {
+    api.takeStock({ sessionId, code: result.product.code, defaults: stockDefaults })
+      .then((snapshot) => { stock = snapshot })
+      .catch((error) => console.error('Falha ao baixar o estoque:', error))
+  }
   api?.saveResponse({
     screen: screenNumber,
     sessionId,
@@ -53,6 +71,17 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   // Trocar a key remonta o quiz do zero: volta para a tela inicial desta tela.
   const [quizKey, setQuizKey] = useState(0)
+  const [stockState, setStockState] = useState(stock)
+
+  useEffect(() => {
+    if (!api?.getStock) return undefined
+    const apply = (snapshot) => {
+      stock = snapshot
+      setStockState(snapshot)
+    }
+    api.getStock().then(apply).catch(() => {})
+    return api.onStockChanged(apply)
+  }, [])
 
   useEffect(() => {
     if (!api?.getConfig) return undefined
@@ -74,7 +103,7 @@ export default function App() {
         questions={quizQuestions}
         resolveQuestions={resolveQuestions}
         products={products}
-        recommend={getQuizRecommendation}
+        recommend={recommend}
         onComplete={finishQuiz}
         lookupPerson={lookupPerson}
         fixedAnswers={fixedAnswers}
@@ -83,7 +112,7 @@ export default function App() {
       />
       <button type="button" className="gs-gear gs-restart" aria-label="Reiniciar" onClick={() => setQuizKey((key) => key + 1)}><RestartIcon /></button>
       <button type="button" className="gs-gear" aria-label="Configurações" onClick={openSettings}><GearIcon /></button>
-      {settingsOpen && <SettingsPanel config={config} onClose={closeSettings} onSaved={setConfig} onTestPrint={testPrint} />}
+      {settingsOpen && <SettingsPanel config={config} onClose={closeSettings} onSaved={setConfig} onTestPrint={testPrint} products={products} stock={stockState} stockOf={stockOf} />}
     </>
   )
 }

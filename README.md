@@ -11,8 +11,10 @@ uma em cada tela.
   lado a lado.
 - **Telas independentes.** Cada janela roda num processo próprio do Chromium, então
   uma pessoa não interfere na outra.
-- **Respostas gravadas.** Cada quiz concluído vira uma linha em
-  `Documentos\GoodLife Quiz\respostas.csv` (abre direto no Excel, separado por `;`).
+- **Respostas gravadas, um arquivo por dia.** Cada quiz concluído vira uma linha em
+  `Documentos\GoodLife Quiz\respostas-16-10-2026.csv` (o dia do quiz; abre direto no Excel,
+  separado por `;`). Na engrenagem aparece quantos quizzes teve cada dia, com botão para abrir.
+  O `respostas.csv` de versões anteriores fica na pasta, intacto.
   As duas telas gravam pelo mesmo processo, em série, então votos simultâneos não se misturam.
   Se a pessoa usar "Revisar respostas" e concluir de novo, sai uma nova linha com o mesmo
   código de `sessao`; para contar votos, use a última linha de cada sessão.
@@ -50,6 +52,18 @@ Fontes aceitas (vale a mais recente): a lista baixada da API, o cache do app CON
 (`%APPDATA%\Conecta Check-in\roster.json`) e uma lista importada pela engrenagem
 (**Importar lista**: o `roster.json` do Check-in ou a planilha de times em CSV `LOJA;MAT;NOME;DIA;TIME`).
 
+## Estoque das vitaminas
+
+O app começa com as quantidades da planilha do evento (`qtde` em `src/quiz/evento.js`). Cada quiz
+concluído **baixa 1 unidade da sugestão principal** (as 2 extras do cupom não baixam). Quando um
+produto acaba, a sugestão principal passa a ser **o próximo que combina com a pessoa**.
+"Revisar respostas" e concluir de novo não baixa duas vezes.
+
+Engrenagem → **Estoque das vitaminas → Editar**: ligar ou desligar o controle (desligado, o quiz
+sugere qualquer produto e não baixa nada), corrigir a quantidade de cada produto ou voltar às
+quantidades da planilha. O saldo fica em `%APPDATA%\GoodLife Quiz\estoque.json` e vale para
+todas as telas deste computador.
+
 ## Configurações (engrenagem no canto superior direito)
 
 Toque na engrenagem em qualquer tela. Tudo é ajustável por toque, sem teclado:
@@ -61,7 +75,8 @@ Toque na engrenagem em qualquer tela. Tudo é ajustável por toque, sem teclado:
 | Voltar ao início | Tempo sem toque até a tela voltar para o início (15 s a 10 min). |
 | Tamanho da interface | Aumenta ou reduz tudo (70% a 150%), para ajuste fino na telinha. |
 | Senha | PIN de 4 a 8 números pedido ao abrir as configurações. Recomendado no evento, para o público não mexer. |
-| Respostas | Quantos quizzes foram concluídos e botão para abrir a pasta do CSV. |
+| Respostas | Quantos quizzes foram concluídos, por dia, e botões para abrir a pasta ou o arquivo de cada dia. |
+| Estoque das vitaminas | Saldo de cada produto, ligar/desligar o controle e voltar à planilha. |
 | Fechar o app | Encerra todas as telas (pede confirmação). |
 
 As configurações valem para todas as telas e ficam salvas em
@@ -133,6 +148,7 @@ não abre outro conjunto de telas.
 - `electron/conecta.cjs` — login na API do CONECTA, download das equipes e consulta online.
 - `electron/roster.cjs` — lista de participantes (matrícula → nome, loja, time).
 - `electron/printing.cjs` — impressão silenciosa do cupom na térmica.
+- `electron/estoque.cjs` — saldo das vitaminas no evento (baixa da sugestão principal).
 - `src/components/MatriculaStep.jsx` — tela da matrícula com teclado numérico.
 - `src/print/cupom.js` — HTML do cupom (sugestão + 2).
 - `electron/updater.cjs` — atualização automática pelo GitHub, só com as telas no início.

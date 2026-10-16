@@ -111,12 +111,13 @@ export const quizQuestions = [
     ],
   },
   {
-    id: 'activity', label: 'Seu movimento', icon: 'activity',
-    title: 'Como é o movimento no seu dia?', hint: 'Pense na sua rotina de atividade física.',
+    // Quem marcou "Depois do treino" no detalhe já contou que treina.
+    id: 'activity', label: 'Seu movimento', icon: 'activity', skipWhen: (a) => a.focus === 'energia-treino',
+    title: 'E a atividade física?', hint: 'Pense numa semana normal sua.',
     options: [
-      { id: 'sedentary', label: 'Baixo', reasonLabel: 'Pouco movimento', icon: 'leaf' },
-      { id: 'moderate', label: 'Moderado', reasonLabel: 'Movimento moderado', icon: 'activity' },
-      { id: 'high', label: 'Alto', reasonLabel: 'Muito movimento', icon: 'bolt' },
+      { id: 'sedentary', label: 'Quase não me exercito', reasonLabel: 'Pouco movimento', icon: 'leaf' },
+      { id: 'moderate', label: 'Caminho ou treino às vezes', reasonLabel: 'Movimento moderado', icon: 'activity' },
+      { id: 'high', label: 'Treino quase todo dia', reasonLabel: 'Muito movimento', icon: 'bolt' },
     ],
   },
   {

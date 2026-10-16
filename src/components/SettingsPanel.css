@@ -146,3 +146,5 @@
 .gs-login input { min-height: 48px; padding: 0 16px; border: 1px solid #cfe3ee; border-radius: 14px; font: inherit; font-size: 16px; color: #0b4f78; background: #f7fbfd; }
 .gs-login input:focus { outline: 2px solid #9fd8f5; border-color: #9fd8f5; }
 .gs-error { margin: 0; padding: 10px 12px; border-radius: 10px; background: #fdecec; color: #9b1c1c; font-size: 13px; }
+.gs-row--sub { padding-left: 14px; }
+.gs-row--sub strong { font-weight: 500; }

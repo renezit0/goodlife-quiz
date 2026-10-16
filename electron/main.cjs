@@ -6,6 +6,7 @@ const touch = require('./touch.cjs')
 const roster = require('./roster.cjs')
 const conecta = require('./conecta.cjs')
 const printing = require('./printing.cjs')
+const estoque = require('./estoque.cjs')
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 
@@ -65,8 +66,13 @@ const useFullscreen = () => !argJanela && config.telaCheia
 // ---------- Respostas ----------
 
 const csvHeader = 'data_hora;tela;sessao;matricula;nome;loja;idade;idade_fonte;perfil;objetivo;detalhe;atividade;rotina;sono;resultado_perfil;produto;sugestao_2;sugestao_3\n'
-const responsesFile = () =>
-  process.env.GOODLIFE_RESPOSTAS || path.join(app.getPath('documents'), 'GoodLife Quiz', 'respostas.csv')
+
+// Um arquivo por dia (respostas-16-10-2026.csv), na pasta Documentos\GoodLife Quiz.
+// GOODLIFE_RESPOSTAS aponta para um arquivo único, para testes.
+const responsesDir = () => path.join(app.getPath('documents'), 'GoodLife Quiz')
+const dayStamp = (date = new Date()) => date.toLocaleDateString('pt-BR').replace(/\//g, '-')
+const responsesFile = (date = new Date()) =>
+  process.env.GOODLIFE_RESPOSTAS || path.join(responsesDir(), `respostas-${dayStamp(date)}.csv`)
 
 const csvCell = (value) => {
   const text = String(value ?? '')
@@ -74,13 +80,36 @@ const csvCell = (value) => {
 }
 
 // Quizzes concluídos = sessões distintas (revisar respostas repete a sessão).
-function countSessions() {
+function countSessions(file) {
   try {
-    const rows = fs.readFileSync(responsesFile(), 'utf8').split('\n').slice(1).filter(Boolean)
+    const rows = fs.readFileSync(file, 'utf8').split('\n').slice(1).filter(Boolean)
     return new Set(rows.map((row) => row.split(';')[2])).size
   } catch {
     return 0
   }
+}
+
+// Dias com respostas, do mais recente ao mais antigo, para a engrenagem.
+function responseDays() {
+  if (process.env.GOODLIFE_RESPOSTAS) {
+    const file = process.env.GOODLIFE_RESPOSTAS
+    return fs.existsSync(file) ? [{ dia: path.basename(file), arquivo: file, total: countSessions(file) }] : []
+  }
+  let names = []
+  try {
+    names = fs.readdirSync(responsesDir())
+  } catch {
+    return []
+  }
+  return names
+    .map((name) => name.match(/^respostas-(\d{2})-(\d{2})-(\d{4})\.csv$/i))
+    .filter(Boolean)
+    .map(([name, dd, mm, yyyy]) => {
+      const arquivo = path.join(responsesDir(), name)
+      return { dia: `${dd}/${mm}/${yyyy}`, ordem: `${yyyy}${mm}${dd}`, arquivo, total: countSessions(arquivo) }
+    })
+    .sort((a, b) => b.ordem.localeCompare(a.ordem))
+    .map(({ ordem, ...day }) => day)
 }
 
 // Todas as telas enviam para este único processo, que grava em série: dois votos
@@ -224,7 +253,8 @@ const publicConfig = () => ({
   limites: limits,
   monitores: screen.getAllDisplays().length,
   arquivoRespostas: responsesFile(),
-  quizzesConcluidos: countSessions(),
+  respostasPorDia: responseDays(),
+  quizzesConcluidos: responseDays().reduce((sum, day) => sum + day.total, 0),
   linhaDeComando: { telas: argTelas >= 1 ? argTelas : null, janela: argJanela },
   versao: app.getVersion(),
   atualizacao: updateStatus(),
@@ -260,6 +290,11 @@ ipcMain.handle('app:open-responses', () => {
   }
 })
 
+// Abre no Excel o arquivo de um dia (só os da lista da engrenagem).
+ipcMain.handle('app:open-responses-day', (_event, arquivo) => {
+  if (responseDays().some((day) => day.arquivo === arquivo)) shell.openPath(arquivo)
+})
+
 ipcMain.handle('app:quit', () => app.quit())
 
 // ---------- Participantes (matrícula) ----------
@@ -290,6 +325,17 @@ ipcMain.handle('roster:import', async (event) => {
     return { ...roster.info(), erro: error.message }
   }
 })
+
+// ---------- Estoque das vitaminas ----------
+
+// Toda mudança vai para todas as telas, para a próxima sugestão já saber o que acabou.
+const broadcastStock = (snapshot) => {
+  windows.forEach((win) => !win.isDestroyed() && win.webContents.send('estoque:changed', snapshot))
+  return snapshot
+}
+ipcMain.handle('estoque:get', () => estoque.snapshot())
+ipcMain.handle('estoque:take', (_event, request) => broadcastStock(estoque.take(request)))
+ipcMain.handle('estoque:update', (_event, patch) => broadcastStock(estoque.update(patch)))
 
 // ---------- Impressão do cupom ----------
 

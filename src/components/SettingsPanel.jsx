@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './SettingsPanel.css'
 
 const PANEL_IDLE_MS = 90_000
@@ -84,7 +84,56 @@ function PinPad({ title, hint, error, onSubmit, onCancel, minLength = 4 }) {
   )
 }
 
-export default function SettingsPanel({ config, onClose, onSaved, onTestPrint }) {
+const shortProductName = (product) => (product.officialName || product.name || '').replace(/^GOODLIFE\s+/i, '')
+
+// Estoque das vitaminas: liga/desliga o controle e corrige a quantidade de cada produto.
+function StockEditor({ products, stock, stockOf, onCancel, onSave }) {
+  const [ativo, setAtivo] = useState(stock.ativo)
+  const [saldo, setSaldo] = useState(() => Object.fromEntries(products.map((p) => [p.code, stockOf(p.code, stock)])))
+  const [resetar, setResetar] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const total = Object.values(saldo).reduce((sum, value) => sum + value, 0)
+  const backToSheet = () => {
+    setSaldo(Object.fromEntries(products.map((p) => [p.code, p.qtde || 0])))
+    setResetar(true)
+  }
+  const save = async () => {
+    setSaving(true)
+    try {
+      await onSave({ ativo, saldo: resetar ? null : saldo })
+    } finally {
+      setSaving(false)
+    }
+  }
+  return (
+    <div className="gs-body">
+      <h2>Estoque das vitaminas</h2>
+      <p className="gs-muted">Cada quiz concluído baixa 1 unidade da sugestão principal. Quando um produto acaba, o quiz sugere o próximo que combina com a pessoa.</p>
+      <div className="gs-rows">
+        <div className="gs-row">
+          <div><strong>Controlar estoque</strong><span>{ativo ? `${total} unidades no total` : 'Desligado: sugere qualquer produto e não baixa nada'}</span></div>
+          <div className="gs-segmented" role="group" aria-label="Controlar estoque">
+            <button type="button" aria-pressed={ativo} onClick={() => setAtivo(true)}>Ligado</button>
+            <button type="button" aria-pressed={!ativo} onClick={() => setAtivo(false)}>Desligado</button>
+          </div>
+        </div>
+        {products.map((product) => (
+          <div className="gs-row" key={product.code}>
+            <div><strong>{shortProductName(product)}</strong><span>Cód. {product.code} · planilha: {product.qtde || 0}{saldo[product.code] === 0 ? ' · esgotado' : ''}</span></div>
+            <Stepper label={`estoque de ${shortProductName(product)}`} value={saldo[product.code]} min={0} max={999} step={1} onChange={(value) => { setResetar(false); setSaldo((current) => ({ ...current, [product.code]: value })) }} />
+          </div>
+        ))}
+      </div>
+      <div className="gs-actions">
+        <button type="button" className="gs-link gs-quit" onClick={backToSheet}>Voltar às quantidades da planilha</button>
+        <button type="button" className="gs-secondary" onClick={onCancel}>Cancelar</button>
+        <button type="button" className="gs-primary" disabled={saving} onClick={save}>{saving ? 'Salvando…' : 'Salvar estoque'}</button>
+      </div>
+    </div>
+  )
+}
+
+export default function SettingsPanel({ config, onClose, onSaved, onTestPrint, products = [], stock, stockOf }) {
   const api = window.goodlife
   const [mode, setMode] = useState(config.temSenha ? 'unlock' : 'form')
   const [pinError, setPinError] = useState('')
@@ -106,6 +155,9 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint })
   const [newPin, setNewPin] = useState(undefined) // undefined = sem mudança, '' = remover
   const [saving, setSaving] = useState(false)
   const [confirmQuit, setConfirmQuit] = useState(false)
+  const panelRef = useRef(null)
+  // Cada tela do painel (formulário, estoque, senha...) começa do topo.
+  useEffect(() => { panelRef.current?.scrollTo({ top: 0 }) }, [mode])
   const update = (key) => (value) => setDraft((current) => ({ ...current, [key]: value }))
   const { limites } = config
   const layoutChanged = draft.telas !== config.telas || draft.telaCheia !== config.telaCheia
@@ -232,6 +284,19 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint })
         </div>
       </form>
     )
+  } else if (mode === 'estoque') {
+    content = (
+      <StockEditor
+        products={products}
+        stock={stock}
+        stockOf={stockOf}
+        onCancel={() => setMode('form')}
+        onSave={async (patch) => {
+          await api.updateStock(patch)
+          setMode('form')
+        }}
+      />
+    )
   } else if (mode === 'new-pin') {
     content = (
       <PinPad
@@ -277,9 +342,25 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint })
             </div>
           </div>
           <div className="gs-row">
-            <div><strong>Respostas</strong><span>{config.quizzesConcluidos} quiz{config.quizzesConcluidos === 1 ? '' : 'zes'} concluído{config.quizzesConcluidos === 1 ? '' : 's'}</span><span className="gs-path" title={config.arquivoRespostas}>{config.arquivoRespostas}</span></div>
+            <div><strong>Respostas</strong><span>{config.quizzesConcluidos} quiz{config.quizzesConcluidos === 1 ? '' : 'zes'} concluído{config.quizzesConcluidos === 1 ? '' : 's'} · um arquivo por dia</span><span className="gs-path" title={config.arquivoRespostas}>{config.arquivoRespostas}</span></div>
             <button type="button" className="gs-secondary" onClick={() => api.openResponses()}>Abrir pasta</button>
           </div>
+          {(config.respostasPorDia || []).map((day) => (
+            <div className="gs-row gs-row--sub" key={day.arquivo}>
+              <div><strong>{day.dia === new Date().toLocaleDateString('pt-BR') ? `Hoje (${day.dia})` : day.dia}</strong><span>{day.total} quiz{day.total === 1 ? '' : 'zes'}</span></div>
+              <button type="button" className="gs-secondary" onClick={() => api.openResponsesDay(day.arquivo)}>Abrir no Excel</button>
+            </div>
+          ))}
+          {stock && (
+            <div className="gs-row">
+              <div><strong>Estoque das vitaminas</strong><span>{stock.ativo ? (() => {
+                const esgotados = products.filter((p) => stockOf(p.code, stock) <= 0).length
+                const total = products.reduce((sum, p) => sum + stockOf(p.code, stock), 0)
+                return `${total} unidades${esgotados ? ` · ${esgotados} esgotado${esgotados > 1 ? 's' : ''}` : ''}`
+              })() : 'Controle desligado'}</span></div>
+              <button type="button" className="gs-secondary" onClick={() => setMode('estoque')}>Editar</button>
+            </div>
+          )}
           <div className="gs-row">
             <div>
               <strong>Conta do CONECTA (API)</strong>
@@ -354,7 +435,7 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint })
 
   return (
     <div className="gs-overlay" role="dialog" aria-modal="true" aria-label="Configurações" onPointerDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div className="gs-panel">{content}</div>
+      <div className="gs-panel" ref={panelRef}>{content}</div>
     </div>
   )
 }

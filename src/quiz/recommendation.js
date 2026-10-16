@@ -344,7 +344,9 @@ function reasonFor(scored, answers, questions) {
   }
 }
 
-export const getQuizRecommendation = (products, answers) => {
+// indisponiveis: códigos sem estoque no evento. A sugestão principal pula esses produtos e vai
+// para o próximo que faz sentido; as 2 extras são só indicação e podem citar qualquer um.
+export const getQuizRecommendation = (products, answers, { indisponiveis = new Set() } = {}) => {
   const needs = needsFrom(answers)
   const scoreAll = (needsNow) => products
     .map((product) => scoreProduct(product, needsNow, answers))
@@ -358,7 +360,10 @@ export const getQuizRecommendation = (products, answers) => {
   const topOf = (map) => Object.entries(map || {}).sort((a, b) => b[1] - a[1])[0]?.[0]
   const focusNeed = topOf(needsByAnswer.focus[answers.focus])
   const goalNeed = topOf(needsByAnswer.goal[answers.goal])
-  const eligible = scoreAll(needs).filter(({ product }) => product.papel !== 'complemento')
+  const principais = scoreAll(needs).filter(({ product }) => product.papel !== 'complemento')
+  // Se tudo tiver acabado, ainda mostra uma sugestão (melhor do que tela vazia).
+  const emEstoque = principais.filter(({ product }) => !indisponiveis.has(product.code))
+  const eligible = emEstoque.length ? emEstoque : principais
   const strongIn = (need) => need && eligible.find(({ product }) => (product.beneficios?.[need] || 0) >= 3)
   const first = strongIn(focusNeed) || strongIn(goalNeed) || eligible[0]
   const picked = first ? [first] : []

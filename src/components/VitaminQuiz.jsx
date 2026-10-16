@@ -37,7 +37,8 @@ function Icon({ name, className = '' }) {
 }
 
 // lookupPerson: quando informado, o quiz começa pedindo a matrícula do participante.
-// onComplete(answers, sessionId, pessoa) pode devolver uma promessa { ok } da impressão do cupom.
+// recommend(products, answers, sessionId) dá o resultado; onComplete(answers, sessionId, pessoa, result)
+// pode devolver uma promessa { ok } da impressão do cupom.
 // fixedAnswers(pessoa): respostas que já vêm do cadastro (a idade, pela matrícula); a pergunta
 // delas não aparece.
 export default function VitaminQuiz({ questions: questionList, resolveQuestions, products, recommend, onComplete, onActiveChange, lookupPerson, fixedAnswers, idleResetMs = 0 }) {
@@ -64,7 +65,8 @@ export default function VitaminQuiz({ questions: questionList, resolveQuestions,
   const complete = step >= questions.length
   const question = questions[step]
   const meta = question
-  const result = useMemo(() => complete ? recommend(products, { ...answers, ...fixed }) : null, [complete, products, answers, fixed, recommend])
+  // Calculado uma vez, ao terminar: o estoque pode mudar (outra tela) enquanto a pessoa lê o resultado.
+  const [result, setResult] = useState(null)
   const answeredCount = step
   const progress = Math.round(answeredCount / questions.length * 100)
 
@@ -151,7 +153,10 @@ export default function VitaminQuiz({ questions: questionList, resolveQuestions,
     setStep((value) => value + 1)
     // A resposta pode tirar perguntas seguintes (ex.: objetivo sono pula a do sono): conta de novo.
     if (step + 1 >= resolve(nextAnswers).length) {
-      const printing = onComplete?.({ ...nextAnswers, ...fixed }, sessionRef.current, pessoa)
+      const finalAnswers = { ...nextAnswers, ...fixed }
+      const finalResult = recommend(products, finalAnswers, sessionRef.current)
+      setResult(finalResult)
+      const printing = onComplete?.(finalAnswers, sessionRef.current, pessoa, finalResult)
       if (printing?.then) {
         setPrintState('printing')
         printing.then((result) => setPrintState(result?.ok ? 'done' : result?.desligado ? null : 'failed'))
@@ -171,6 +176,7 @@ export default function VitaminQuiz({ questions: questionList, resolveQuestions,
     setStarted(false)
     setPessoa(null)
     setPrintState(null)
+    setResult(null)
     setStep(0)
     setAnswers({})
   }, -1)
@@ -188,6 +194,7 @@ export default function VitaminQuiz({ questions: questionList, resolveQuestions,
         setStarted(false)
         setPessoa(null)
         setPrintState(null)
+        setResult(null)
         setStep(0)
         setAnswers({})
       }, -1), idleResetMs)
@@ -213,7 +220,7 @@ export default function VitaminQuiz({ questions: questionList, resolveQuestions,
 
       <div className={`vq-layout ${started ? 'vq-layout--active' : ''}`}>
         <section className="vq-workspace" aria-label="Questionário de vitaminas">
-          <div className="vq-progress-header"><span>{complete ? 'Seu resultado' : askMatricula ? 'Identificação' : started ? 'Vamos conhecer você' : 'Descubra sua vitamina'}</span><span>{askMatricula ? 'CONECTA 2026' : started ? `${String(Math.min(step + 1, questions.length)).padStart(2, '0')} / ${String(questions.length).padStart(2, '0')}` : <><Icon name="clock" /> Cerca de 1 minuto</>}</span></div>
+          <div className="vq-progress-header"><span>{complete ? 'Seu resultado' : askMatricula ? 'Identificação' : started ? 'Vamos conhecer você' : 'Descubra sua vitamina'}</span><span>{askMatricula ? 'CONECTA 2026' : complete ? 'Pronto' : started ? `Pergunta ${step + 1}` : <><Icon name="clock" /> Cerca de 1 minuto</>}</span></div>
           <div className="vq-progress" role="progressbar" aria-label="Perguntas respondidas" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={answeredCount} aria-valuetext={`${answeredCount} de ${questions.length} perguntas respondidas`}>
             {questions.map((item, index) => <span key={item.id} className={`${index < step ? 'is-complete' : ''} ${started && !askMatricula && index === step ? 'is-active' : ''}`} />)}
           </div>
