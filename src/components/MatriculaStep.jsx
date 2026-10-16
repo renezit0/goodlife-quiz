@@ -120,9 +120,11 @@ export default function MatriculaStep({ lookup, search, onDone, disabled }) {
           {digits ? <span className="mt-digits">{digits}</span> : <span className="mt-placeholder">Digite no teclado</span>}
           {state !== 'missing' && <span className="mt-caret" aria-hidden="true" />}
         </div>
-        <p className={`mt-message ${state === 'missing' ? 'is-error' : ''}`}>
-          {state === 'missing' ? `Não encontramos a matrícula ${digits}.` : state === 'searching' ? 'Procurando…' : 'É o número do seu crachá do CONECTA.'}
-        </p>
+        {(state === 'missing' || state === 'searching') && (
+          <p className={`mt-message ${state === 'missing' ? 'is-error' : ''}`}>
+            {state === 'missing' ? `Não encontramos a matrícula ${digits}.` : 'Procurando…'}
+          </p>
+        )}
         {search && <p className="mt-hint">Não sabe? Digite <b>1</b> e procure pelo nome.</p>}
         {state === 'missing' && (
           <button type="button" className="vq-text-button mt-skip" disabled={disabled} onClick={() => onDone({ matricula: digits, nome: '', loja: '', time: '' })}>Continuar assim mesmo</button>
