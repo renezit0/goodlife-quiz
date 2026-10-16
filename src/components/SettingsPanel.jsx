@@ -148,6 +148,8 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint, p
   const [printers, setPrinters] = useState([])
   const [participantes, setParticipantes] = useState(config.participantes)
   const [rosterMessage, setRosterMessage] = useState('')
+  const [sexoInfo, setSexoInfo] = useState(config.sexo || { total: 0 })
+  const [sexoMessage, setSexoMessage] = useState('')
   const [testMessage, setTestMessage] = useState('')
   const [conecta, setConecta] = useState(config.conecta || { conectado: false })
   const [conectaMessage, setConectaMessage] = useState('')
@@ -173,6 +175,19 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint, p
     setParticipantes(info)
     if (info.erro) setRosterMessage(info.erro)
     else if (!info.cancelado) setRosterMessage(`Lista importada: ${info.total} pessoas.`)
+  }
+
+  const importSexo = async () => {
+    setSexoMessage('')
+    const info = await api.importSexo()
+    setSexoInfo(info)
+    if (info.erro) setSexoMessage(info.erro)
+    else if (!info.cancelado) setSexoMessage(`Planilha importada: ${info.total} pessoas com sexo.`)
+  }
+
+  const removeSexo = async () => {
+    setSexoInfo(await api.removeSexo())
+    setSexoMessage('Planilha removida: o quiz volta a perguntar Homem ou Mulher.')
   }
 
   const refreshRoster = async () => {
@@ -383,6 +398,17 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint, p
               {rosterMessage && <span className="gs-hint">{rosterMessage}</span>}
             </div>
             <button type="button" className="gs-secondary" onClick={importRoster}>Importar lista</button>
+          </div>
+          <div className="gs-row">
+            <div>
+              <strong>Sexo dos participantes</strong>
+              <span>{sexoInfo?.total ? `${sexoInfo.total} pessoas · importada em ${sexoInfo.atualizadaEm} · quem está na planilha não responde Homem/Mulher` : 'Importe a planilha (Excel ou CSV) com as colunas MAT e Sexo para não perguntar Homem/Mulher.'}</span>
+              {sexoMessage && <span className="gs-hint">{sexoMessage}</span>}
+            </div>
+            <div className="gs-inline-actions">
+              <button type="button" className="gs-secondary" onClick={importSexo}>Importar planilha</button>
+              {sexoInfo?.total > 0 && <button type="button" className="gs-secondary" onClick={removeSexo}>Remover</button>}
+            </div>
           </div>
           <div className="gs-row">
             <div><strong>Imprimir cupom</strong><span>Ao terminar o quiz, com a sugestão e mais 2</span></div>

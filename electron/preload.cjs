@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('goodlife', {
   lookupPerson: (matricula) => ipcRenderer.invoke('roster:lookup', matricula),
   rosterInfo: () => ipcRenderer.invoke('roster:info'),
   importRoster: () => ipcRenderer.invoke('roster:import'),
+  importSexo: () => ipcRenderer.invoke('sexo:import'),
+  removeSexo: () => ipcRenderer.invoke('sexo:remove'),
   conectaStatus: () => ipcRenderer.invoke('conecta:status'),
   conectaLogin: (usuario, senha) => ipcRenderer.invoke('conecta:login', { usuario, senha }),
   conectaSync: () => ipcRenderer.invoke('conecta:sync'),

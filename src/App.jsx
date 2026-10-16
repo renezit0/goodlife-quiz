@@ -14,10 +14,15 @@ const fallbackConfig = { inatividadeSegundos: 60 }
 
 const lookupPerson = api?.lookupPerson ? (matricula) => api.lookupPerson(matricula) : undefined
 
-// Com a idade no cadastro do CONECTA, a faixa vem pronta e a pergunta de idade não aparece.
+// Com a idade no cadastro do CONECTA e o sexo na planilha importada, essas respostas vêm prontas
+// e as perguntas de idade e de Homem/Mulher não aparecem.
+const genderBySexo = { F: 'female', M: 'male' }
 const fixedAnswers = (pessoa) => {
+  const fixed = {}
   const age = faixaEtaria(pessoa?.idade)
-  return age ? { age } : {}
+  if (age) fixed.age = age
+  if (genderBySexo[pessoa?.sexo]) fixed.gender = genderBySexo[pessoa.sexo]
+  return fixed
 }
 
 // Estoque do evento: a quantidade da planilha (evento.js) e o saldo guardado pelo app, que vale
@@ -47,6 +52,7 @@ const finishQuiz = (answers, sessionId, pessoa, result) => {
     pessoa: pessoa || {},
     answers,
     ageSource: fixedAnswers(pessoa).age ? 'matricula' : answers.age ? 'resposta' : '',
+    genderSource: fixedAnswers(pessoa).gender ? 'planilha' : answers.gender ? 'resposta' : '',
     profileId: result.profileId,
     productName: result.product?.name,
     alternatives: result.alternatives.map((product) => product.name),

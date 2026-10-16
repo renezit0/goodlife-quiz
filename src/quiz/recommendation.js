@@ -329,8 +329,9 @@ function reasonFor(scored, answers, questions) {
   for (const item of strong.length ? strong : behind) {
     if (!picked.some(({ label }) => label === item.label) && picked.length < 2) picked.push(item)
   }
+  // "Mulher" não entra: o sexo pode ter vindo da planilha (não foi marcado), e o nome do
+  // produto já diz que é a versão feminina.
   const labels = picked.map(({ label }) => label)
-  if (scored.product.publico === 'mulher') labels.push('Mulher')
   const quoted = labels.slice(0, 3).map((label) => `“${label}”`)
   const age = scored.product.publico === '50+' ? ageText[answers.age] : null
   const joined = age || quoted.length < 2 ? quoted.join(', ') : `${quoted.slice(0, -1).join(', ')} e ${quoted.at(-1)}`

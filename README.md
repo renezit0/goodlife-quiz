@@ -52,6 +52,15 @@ Fontes aceitas (vale a mais recente): a lista baixada da API, o cache do app CON
 (`%APPDATA%\Conecta Check-in\roster.json`) e uma lista importada pela engrenagem
 (**Importar lista**: o `roster.json` do Check-in ou a planilha de times em CSV `LOJA;MAT;NOME;DIA;TIME`).
 
+## Sexo dos participantes (planilha)
+
+O cadastro da API do CONECTA não tem o sexo. Engrenagem → **Sexo dos participantes → Importar
+planilha**: um Excel (`.xlsx`) ou CSV com uma coluna de matrícula (`MAT...`) e uma de sexo
+(`Sexo` ou `Gênero`, com F/M ou Feminino/Masculino). Quem está na planilha não responde
+"Homem ou mulher?". A planilha fica só neste computador (`%APPDATA%\GoodLife Quiz\sexo.json`),
+**nunca no código**, porque o repositório e os instaladores são públicos. O CSV de respostas tem a
+coluna `perfil_fonte` (`planilha` ou `resposta`).
+
 ## Estoque das vitaminas
 
 O app começa com as quantidades da planilha do evento (`qtde` em `src/quiz/evento.js`). Cada quiz
@@ -149,6 +158,7 @@ não abre outro conjunto de telas.
 - `electron/roster.cjs` — lista de participantes (matrícula → nome, loja, time).
 - `electron/printing.cjs` — impressão silenciosa do cupom na térmica.
 - `electron/estoque.cjs` — saldo das vitaminas no evento (baixa da sugestão principal).
+- `electron/sexo.cjs` — planilha de sexo dos participantes (importada pela engrenagem).
 - `src/components/MatriculaStep.jsx` — tela da matrícula com teclado numérico.
 - `src/print/cupom.js` — HTML do cupom (sugestão + 2).
 - `electron/updater.cjs` — atualização automática pelo GitHub, só com as telas no início.

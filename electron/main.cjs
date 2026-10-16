@@ -7,6 +7,7 @@ const roster = require('./roster.cjs')
 const conecta = require('./conecta.cjs')
 const printing = require('./printing.cjs')
 const estoque = require('./estoque.cjs')
+const sexo = require('./sexo.cjs')
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 
@@ -65,7 +66,7 @@ const useFullscreen = () => !argJanela && config.telaCheia
 
 // ---------- Respostas ----------
 
-const csvHeader = 'data_hora;tela;sessao;matricula;nome;loja;idade;idade_fonte;perfil;objetivo;detalhe;atividade;rotina;sono;resultado_perfil;produto;sugestao_2;sugestao_3\n'
+const csvHeader = 'data_hora;tela;sessao;matricula;nome;loja;idade;idade_fonte;perfil;perfil_fonte;objetivo;detalhe;atividade;rotina;sono;resultado_perfil;produto;sugestao_2;sugestao_3\n'
 
 // Um arquivo por dia (respostas-16-10-2026.csv), na pasta Documentos\GoodLife Quiz.
 // GOODLIFE_RESPOSTAS aponta para um arquivo único, para testes.
@@ -133,6 +134,7 @@ ipcMain.handle('quiz:response', (_event, response) => {
     answers.age,
     response.ageSource,
     answers.gender,
+    response.genderSource,
     answers.goal,
     answers.focus,
     answers.activity,
@@ -249,6 +251,7 @@ const publicConfig = () => ({
   imprimir: config.imprimir,
   impressoras: config.impressoras,
   participantes: roster.info(),
+  sexo: sexo.info(),
   conecta: conecta.status(),
   limites: limits,
   monitores: screen.getAllDisplays().length,
@@ -300,12 +303,29 @@ ipcMain.handle('app:quit', () => app.quit())
 // ---------- Participantes (matrícula) ----------
 
 // Primeiro a lista no computador (instantâneo, funciona sem internet); se não achar, pergunta à API.
+// O sexo vem da planilha importada pela engrenagem (sexo.cjs), quando a pessoa está nela.
+const withSexo = (pessoa) => pessoa && { ...pessoa, sexo: sexo.of(pessoa.matricula) }
 ipcMain.handle('roster:lookup', async (_event, matricula) => {
   const local = roster.lookup(matricula)
-  if (local) return local
+  if (local) return withSexo(local)
   const online = await conecta.lookupOnline(roster.matriculaKey(matricula)).catch(() => null)
-  return online ? roster.person(online) : null
+  return online ? withSexo(roster.person(online)) : null
 })
+ipcMain.handle('sexo:import', async (event) => {
+  const parent = BrowserWindow.fromWebContents(event.sender)
+  const { canceled, filePaths } = await dialog.showOpenDialog(parent, {
+    title: 'Importar planilha com o sexo dos participantes',
+    filters: [{ name: 'Planilha (matrícula e sexo)', extensions: ['xlsx', 'xlsm', 'csv'] }],
+    properties: ['openFile'],
+  })
+  if (canceled || !filePaths[0]) return { ...sexo.info(), cancelado: true }
+  try {
+    return await sexo.importFrom(filePaths[0])
+  } catch (error) {
+    return { ...sexo.info(), erro: error.message }
+  }
+})
+ipcMain.handle('sexo:remove', () => sexo.remove())
 ipcMain.handle('conecta:status', () => conecta.status())
 ipcMain.handle('conecta:login', (_event, { usuario, senha } = {}) => conecta.login(String(usuario || '').trim(), String(senha || '')))
 ipcMain.handle('conecta:sync', () => conecta.sync())
