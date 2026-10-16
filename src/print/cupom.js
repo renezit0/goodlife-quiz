@@ -19,6 +19,9 @@ const shortName = (nome) => {
 
 const productName = (product) => product?.officialName || product?.name || ''
 
+// Idade do cadastro do CONECTA (anos); a mesma faixa de validade de faixaEtaria em perguntas.js.
+const idadeValida = (idade) => Number.isFinite(Number(idade)) && Number(idade) >= 14 && Number(idade) <= 100
+
 export function htmlCupomQuiz({ pessoa, result, answers, questions, screen, sessionId }) {
   const now = new Date()
   const data = now.toLocaleDateString('pt-BR')
@@ -27,6 +30,8 @@ export function htmlCupomQuiz({ pessoa, result, answers, questions, screen, sess
   const alternatives = result?.alternatives || []
 
   const answersHtml = questions.map((question) => {
+    // Com a idade do cadastro no topo do cupom, a faixa de idade repetiria a informação.
+    if (question.id === 'age' && idadeValida(pessoa?.idade)) return ''
     const option = question.options.find((item) => item.id === answers[question.id])
     // "Nenhum desses" não diz nada fora da tela da pergunta: fica fora do cupom.
     return option && option.icon !== 'none' ? `<li>${escapeHtml(option.reasonLabel || option.label)}</li>` : ''
@@ -37,6 +42,7 @@ export function htmlCupomQuiz({ pessoa, result, answers, questions, screen, sess
     <div class="line"><span>Matrícula</span><strong>${escapeHtml(pessoa.matricula)}</strong></div>
     ${pessoa.loja ? `<div class="line"><span>Loja</span><strong>${escapeHtml(pessoa.loja)}${pessoa.lojaNumero ? ` (${escapeHtml(pessoa.lojaNumero)})` : ''}</strong></div>` : ''}
     ${pessoa.time ? `<div class="line"><span>Time</span><strong>${escapeHtml(pessoa.time)}</strong></div>` : ''}
+    ${idadeValida(pessoa.idade) ? `<div class="line"><span>Idade</span><strong>${Number(pessoa.idade)} anos</strong></div>` : ''}
     <div class="hr"></div>` : ''
 
   const mainHtml = main ? `
