@@ -115,6 +115,10 @@
 .vq-result-info ul { padding: 0; list-style: none; display: grid; gap: 8px; margin: 0; }
 .vq-result-info li { font-size: 14px; line-height: 1.3; color: #386883; display: flex; gap: 8px; }
 .vq-result-info li svg { width: 16px; height: 16px; }
+/* Só "Fazer nova pesquisa" no resultado: botão maior, fácil de achar no totem. .vq na frente
+   porque .vq button { font: inherit } é mais específico que .vq-primary. */
+.vq .vq-result-actions .vq-primary { min-height: clamp(54px, 11cqh, 78px); padding: 0 clamp(26px, 5cqh, 40px); gap: 18px; font-size: clamp(19px, 4.6cqh, 28px); font-weight: 600; }
+.vq .vq-result-actions .vq-primary svg { width: 1.15em; height: 1.15em; }
 .vq-result-actions { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px 24px; }
 @media (hover: hover) { .vq-option:hover:not(:disabled) { border-color: #acdfff; box-shadow: 0 9px 22px #00345333; } }
 @media (max-width: 800px) {
