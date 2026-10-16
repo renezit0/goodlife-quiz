@@ -402,7 +402,7 @@ export default function SettingsPanel({ config, onClose, onSaved, onTestPrint, p
           <div className="gs-row">
             <div>
               <strong>Sexo dos participantes</strong>
-              <span>{sexoInfo?.total ? `${sexoInfo.total} pessoas · importada em ${sexoInfo.atualizadaEm} · quem está na planilha não responde Homem/Mulher` : 'Importe a planilha (Excel ou CSV) com as colunas MAT e Sexo para não perguntar Homem/Mulher.'}</span>
+              <span>{sexoInfo?.total ? `${sexoInfo.total} pessoas · importada em ${sexoInfo.atualizadaEm} · quem está na planilha não responde Homem/Mulher` : 'O sexo vem da API do CONECTA. Se faltar alguém, importe aqui uma planilha (Excel ou CSV) com MAT e Sexo.'}</span>
               {sexoMessage && <span className="gs-hint">{sexoMessage}</span>}
             </div>
             <div className="gs-inline-actions">

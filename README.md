@@ -52,14 +52,17 @@ Fontes aceitas (vale a mais recente): a lista baixada da API, o cache do app CON
 (`%APPDATA%\Conecta Check-in\roster.json`) e uma lista importada pela engrenagem
 (**Importar lista**: o `roster.json` do Check-in ou a planilha de times em CSV `LOJA;MAT;NOME;DIA;TIME`).
 
-## Sexo dos participantes (planilha)
+## Sexo dos participantes
 
-O cadastro da API do CONECTA não tem o sexo. Engrenagem → **Sexo dos participantes → Importar
-planilha**: um Excel (`.xlsx`) ou CSV com uma coluna de matrícula (`MAT...`) e uma de sexo
-(`Sexo` ou `Gênero`, com F/M ou Feminino/Masculino). Quem está na planilha não responde
-"Homem ou mulher?". A planilha fica só neste computador (`%APPDATA%\GoodLife Quiz\sexo.json`),
-**nunca no código**, porque o repositório e os instaladores são públicos. O CSV de respostas tem a
-coluna `perfil_fonte` (`planilha` ou `resposta`).
+A API do CONECTA manda o sexo (F/M) junto com a idade, a partir da tabela `conecta_sexo` do
+servidor (carregada com a planilha de RH). Quem tem sexo no cadastro não responde
+"Homem ou mulher?". **Nunca coloque essa planilha no código**: o repositório e os instaladores são
+públicos.
+
+Plano B, se faltar alguém na API: engrenagem → **Sexo dos participantes → Importar planilha**, um
+Excel (`.xlsx`) ou CSV com uma coluna de matrícula (`MAT...`) e uma de sexo (`Sexo` ou `Gênero`).
+Fica só neste computador (`%APPDATA%\GoodLife Quiz\sexo.json`); o que vem da API tem prioridade.
+O CSV de respostas tem a coluna `perfil_fonte` (`planilha` quando veio do cadastro, ou `resposta`).
 
 ## Estoque das vitaminas
 

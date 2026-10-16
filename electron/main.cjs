@@ -303,8 +303,8 @@ ipcMain.handle('app:quit', () => app.quit())
 // ---------- Participantes (matrícula) ----------
 
 // Primeiro a lista no computador (instantâneo, funciona sem internet); se não achar, pergunta à API.
-// O sexo vem da planilha importada pela engrenagem (sexo.cjs), quando a pessoa está nela.
-const withSexo = (pessoa) => pessoa && { ...pessoa, sexo: sexo.of(pessoa.matricula) }
+// O sexo vem da API do CONECTA; se não vier, da planilha importada pela engrenagem (sexo.cjs).
+const withSexo = (pessoa) => pessoa && { ...pessoa, sexo: pessoa.sexo || sexo.of(pessoa.matricula) }
 ipcMain.handle('roster:lookup', async (_event, matricula) => {
   const local = roster.lookup(matricula)
   if (local) return withSexo(local)

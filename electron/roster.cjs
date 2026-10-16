@@ -40,8 +40,9 @@ function person(raw) {
     loja: clean(raw.loja_nome ?? raw.LOJA ?? raw.loja),
     lojaNumero: clean(raw.loja_numero ?? ''),
     time: staff ? 'STAFF' : clean(raw.grupo_nome ?? raw.TIME ?? raw.time),
-    // Idade em anos (só a API do CONECTA manda): o quiz pula a pergunta de idade.
+    // Idade em anos e sexo (F/M) só a API do CONECTA manda: o quiz pula essas perguntas.
     idade: age(raw.idade),
+    sexo: ['F', 'M'].includes(String(raw.sexo ?? '').trim().toUpperCase()) ? String(raw.sexo).trim().toUpperCase() : null,
   }
 }
 
@@ -102,27 +103,26 @@ function load() {
   return { source, people: cache.people }
 }
 
-// Idades da lista baixada da API, para completar a pessoa quando a lista mais recente é outra
-// (ex.: a do CONECTA Check-in, que não tem idade).
-let ageCache = { mtimeMs: 0, ages: {} }
-function apiAges() {
+// Idade e sexo da lista baixada da API, para completar a pessoa quando a lista mais recente é
+// outra (ex.: a do CONECTA Check-in, que não tem esses dados).
+let apiCache = { mtimeMs: 0, people: {} }
+function apiPeople() {
   try {
     const { mtimeMs } = fs.statSync(apiFile())
-    if (ageCache.mtimeMs !== mtimeMs) {
-      const people = parse(readText(apiFile()), apiFile())
-      ageCache = { mtimeMs, ages: Object.fromEntries(Object.values(people).filter((p) => p.idade).map((p) => [p.matricula, p.idade])) }
-    }
+    if (apiCache.mtimeMs !== mtimeMs) apiCache = { mtimeMs, people: parse(readText(apiFile()), apiFile()) }
   } catch {
-    ageCache = { mtimeMs: 0, ages: {} }
+    apiCache = { mtimeMs: 0, people: {} }
   }
-  return ageCache.ages
+  return apiCache.people
 }
 
 function lookup(matricula) {
   const key = matriculaKey(matricula)
   const found = load().people[key]
   if (!found) return null
-  return found.idade ? found : { ...found, idade: apiAges()[key] || null }
+  if (found.idade && found.sexo) return found
+  const fromApi = apiPeople()[key] || {}
+  return { ...found, idade: found.idade || fromApi.idade || null, sexo: found.sexo || fromApi.sexo || null }
 }
 
 function info() {
