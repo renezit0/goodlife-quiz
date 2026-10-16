@@ -31,15 +31,16 @@
 .mt--found { gap: clamp(8px, 2.4cqh, 18px); }
 .mt-avatar { width: clamp(56px, 15cqh, 104px); height: clamp(56px, 15cqh, 104px); border-radius: 50%; display: grid; place-items: center; background: #fff; color: #0b679c; font-size: clamp(26px, 7cqh, 44px); font-weight: 600; box-shadow: 0 12px 30px #003d6440; animation: mt-pop .5s cubic-bezier(.16, 1, .3, 1); }
 .mt-person { margin: 0; font-size: clamp(14px, 2.8cqh, 18px); color: #d6edf9; font-weight: 300; letter-spacing: .02em; }
-.mt-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.mt-tags span { padding: 7px 13px; border-radius: 999px; background: #ffffff1f; border: 1px solid #ffffff33; font-size: clamp(12px, 2.4cqh, 14px); }
+.mt-tags { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+/* Todas as etiquetas com a mesma altura (a do time tem ícone) e o texto centralizado na vertical. */
+.mt-tags span { display: inline-flex; align-items: center; gap: .45em; height: 2.3em; line-height: 1; padding: 0 1em; border-radius: 999px; background: #ffffff1f; border: 1px solid #ffffff33; font-size: clamp(12px, 2.4cqh, 14px); }
 .mt-actions { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: clamp(4px, 1.5cqh, 12px); }
 /* Letras maiores para o totem. .mt na frente porque .vq button { font: inherit } e o 14px !important
    de .vq-text-button são mais específicos. */
 .mt--found h1 { font-size: clamp(30px, 8.6cqh, 58px); font-weight: 600; }
 .mt--found .vq-eyebrow { font-size: clamp(12px, 2.6cqh, 16px); }
 .mt--found .mt-person { font-size: clamp(16px, 3.8cqh, 26px); font-weight: 400; color: #e6f4fb; }
-.mt--found .mt-tags span { font-size: clamp(14px, 3.1cqh, 20px); font-weight: 500; padding: clamp(6px, 1.4cqh, 10px) clamp(13px, 2.6cqh, 20px); }
+.mt--found .mt-tags span { font-size: clamp(14px, 3.1cqh, 20px); font-weight: 500; }
 .mt .mt-actions .vq-primary { min-height: clamp(54px, 11cqh, 78px); padding: 0 clamp(26px, 5cqh, 40px); gap: 18px; font-size: clamp(19px, 4.6cqh, 28px); font-weight: 600; }
 .mt .mt-actions .vq-primary svg { width: 1.15em; height: 1.15em; }
 .mt .mt-actions .vq-text-button { font-size: clamp(15px, 3.3cqh, 21px) !important; min-height: clamp(44px, 8cqh, 56px); }
@@ -67,6 +68,5 @@
 .mt-insignia--staff { --mito: #ff2d55; }
 .mt-insignia { background: var(--mito); color: #fff; box-shadow: 0 0 0 clamp(3px, .8cqh, 6px) #ffffffd9, 0 14px 34px #003d6455; }
 .mt-insignia svg { width: 50%; height: 50%; }
-.mt-tag-time { display: inline-flex; align-items: center; gap: 8px; }
-.mt-tag-time i { display: grid; place-items: center; width: 1.6em; height: 1.6em; margin-left: -4px; border-radius: 50%; background: var(--mito); color: #fff; }
+.mt-tag-time i { display: grid; place-items: center; flex: none; width: 1.55em; height: 1.55em; margin-left: -.6em; border-radius: 50%; background: var(--mito); color: #fff; }
 .mt-tag-time i svg { width: 62%; height: 62%; }
