@@ -94,7 +94,7 @@ function buildPeople(data) {
   const pessoas = {}
   for (const grupo of data?.grupos || []) {
     for (const membro of grupo.membros || []) {
-      pessoas[String(membro.matricula)] = { ...membro, grupo: grupo.grupo, grupo_nome: grupo.nome, staff: false }
+      pessoas[String(membro.matricula)] = { ...membro, grupo: grupo.grupo, grupo_nome: grupo.nome, mitologia: grupo.mitologia, staff: false }
     }
   }
   for (const membro of data?.staff || []) {
@@ -146,7 +146,7 @@ async function lookupOnline(matricula) {
   const colaborador = result.ok ? result.data?.colaborador : null
   if (!colaborador) return null
   const grupo = result.data?.grupo
-  return { ...colaborador, grupo_nome: grupo?.nome, staff: Boolean(colaborador.staff || grupo?.grupo === 0) }
+  return { ...colaborador, grupo: grupo?.grupo, grupo_nome: grupo?.nome, mitologia: grupo?.mitologia, staff: Boolean(colaborador.staff || grupo?.grupo === 0) }
 }
 
 function status() {

@@ -1,6 +1,7 @@
 // Cupom do quiz na bobina térmica de 79,5 mm, no mesmo formato da pré-venda (prevendacall):
 // participante do CONECTA, sugestão GoodLife principal e mais duas na sequência.
 import goodlifeLogo from '../assets/logo-good-fim.png'
+import { svgInsignia, temInsignia } from '../conecta/insignias'
 
 const escapeHtml = (value) => String(value ?? '')
   .replace(/&/g, '&amp;')
@@ -41,7 +42,7 @@ export function htmlCupomQuiz({ pessoa, result, answers, questions, screen, sess
     <div class="center pessoa">${escapeHtml(shortName(pessoa.nome) || 'Participante')}</div>
     <div class="line"><span>Matrícula</span><strong>${escapeHtml(pessoa.matricula)}</strong></div>
     ${pessoa.loja ? `<div class="line"><span>Loja</span><strong>${escapeHtml(pessoa.loja)}${pessoa.lojaNumero ? ` (${escapeHtml(pessoa.lojaNumero)})` : ''}</strong></div>` : ''}
-    ${pessoa.time ? `<div class="line"><span>Time</span><strong>${escapeHtml(pessoa.time)}</strong></div>` : ''}
+    ${pessoa.time ? `<div class="line"><span>Time</span><strong class="time">${temInsignia(pessoa) ? `<span class="insignia">${svgInsignia(pessoa, { strokeWidth: 2.2 })}</span>` : ''}${escapeHtml(pessoa.time)}</strong></div>` : ''}
     ${idadeValida(pessoa.idade) ? `<div class="line"><span>Idade</span><strong>${Number(pessoa.idade)} anos</strong></div>` : ''}
     <div class="hr"></div>` : ''
 
@@ -88,6 +89,9 @@ export function htmlCupomQuiz({ pessoa, result, answers, questions, screen, sess
     .pessoa { font-size: 19px; font-weight: 700; line-height: 1.15; margin: 2px 0 5px; overflow-wrap: anywhere; }
     .line { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; margin-top: 2px; }
     .line strong { text-align: right; overflow-wrap: anywhere; }
+    .line .time { display: inline-flex; align-items: center; gap: 4px; }
+    .insignia { display: inline-flex; width: 15px; height: 15px; border: 1.5px solid #111; border-radius: 50%; align-items: center; justify-content: center; }
+    .insignia svg { width: 10px; height: 10px; }
     .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .08em; margin-bottom: 4px; }
     .produto { width: 30mm; height: 30mm; object-fit: contain; filter: grayscale(1) contrast(1.1); margin: 2px auto 4px; display: block; }
     .produto-nome { font-size: 16px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }

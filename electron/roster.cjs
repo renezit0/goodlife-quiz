@@ -40,6 +40,10 @@ function person(raw) {
     loja: clean(raw.loja_nome ?? raw.LOJA ?? raw.loja),
     lojaNumero: clean(raw.loja_numero ?? ''),
     time: staff ? 'STAFF' : clean(raw.grupo_nome ?? raw.TIME ?? raw.time),
+    // Número do time (1 a 30) e mitologia, para a insígnia do deus na tela e no cupom.
+    staff,
+    grupo: staff ? 0 : Number.parseInt(raw.grupo, 10) || null,
+    mitologia: staff ? null : clean(raw.mitologia) || null,
     // Idade em anos e sexo (F/M) só a API do CONECTA manda: o quiz pula essas perguntas.
     idade: age(raw.idade),
     sexo: ['F', 'M'].includes(String(raw.sexo ?? '').trim().toUpperCase()) ? String(raw.sexo).trim().toUpperCase() : null,

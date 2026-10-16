@@ -58,3 +58,15 @@
 @keyframes mt-shake { 10%, 90% { translate: -2px 0; } 20%, 80% { translate: 4px 0; } 30%, 50%, 70% { translate: -8px 0; } 40%, 60% { translate: 8px 0; } }
 @keyframes mt-pop { from { scale: .6; opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .mt-caret, .mt-shake, .mt-avatar { animation: none; } }
+
+/* Insígnia do time (deus do CONECTA): círculo na cor da mitologia, símbolo branco, aro claro para
+   destacar do azul do fundo. Cores iguais às do CONECTA Check-in. */
+.mt-insignia--grega { --mito: #007aff; }
+.mt-insignia--egipcia { --mito: #ff9f0a; }
+.mt-insignia--romana { --mito: #ff3b30; }
+.mt-insignia--staff { --mito: #ff2d55; }
+.mt-insignia { background: var(--mito); color: #fff; box-shadow: 0 0 0 clamp(3px, .8cqh, 6px) #ffffffd9, 0 14px 34px #003d6455; }
+.mt-insignia svg { width: 50%; height: 50%; }
+.mt-tag-time { display: inline-flex; align-items: center; gap: 8px; }
+.mt-tag-time i { display: grid; place-items: center; width: 1.6em; height: 1.6em; margin-left: -4px; border-radius: 50%; background: var(--mito); color: #fff; }
+.mt-tag-time i svg { width: 62%; height: 62%; }

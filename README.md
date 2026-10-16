@@ -163,6 +163,7 @@ não abre outro conjunto de telas.
 - `electron/estoque.cjs` — saldo das vitaminas no evento (baixa da sugestão principal).
 - `electron/sexo.cjs` — planilha de sexo dos participantes (importada pela engrenagem).
 - `src/components/MatriculaStep.jsx` — tela da matrícula com teclado numérico.
+- `src/conecta/insignias.js` — insígnias dos deuses dos times do CONECTA (as mesmas do CONECTA Check-in), na tela "Olá" e no cupom. Ícones Lucide, licença ISC em `vendor/lucide-LICENSE.txt`.
 - `src/print/cupom.js` — HTML do cupom (sugestão + 2).
 - `electron/updater.cjs` — atualização automática pelo GitHub, só com as telas no início.
 - `electron/preload.cjs` — ponte segura entre o quiz e o processo principal.

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { mitologia, nomeMitologia, svgInsignia, temInsignia } from '../conecta/insignias'
 import './MatriculaStep.css'
 
 const MAX_DIGITS = 8
@@ -67,13 +68,21 @@ export default function MatriculaStep({ lookup, onDone, disabled }) {
     return (
       <div className="mt mt--found">
         <span className="vq-eyebrow">PARTICIPANTE CONECTA 2026</span>
-        <div className="mt-avatar" aria-hidden="true">{firstName(person.nome).charAt(0)}</div>
+        {/* Insígnia do deus do time, na cor da mitologia (como no CONECTA Check-in); sem time, a inicial. */}
+        {temInsignia(person)
+          ? <div className={`mt-avatar mt-insignia mt-insignia--${mitologia(person)}`} aria-hidden="true" dangerouslySetInnerHTML={{ __html: svgInsignia(person, { strokeWidth: 1.8 }) }} />
+          : <div className="mt-avatar" aria-hidden="true">{firstName(person.nome).charAt(0)}</div>}
         <h1 tabIndex={-1}>Olá, {firstName(person.nome)}!</h1>
         <p className="mt-person">{person.nome}</p>
         <div className="mt-tags">
           <span>Matrícula {person.matricula}</span>
           {person.loja && <span>{person.loja}</span>}
-          {person.time && <span>Time {person.time}</span>}
+          {person.time && (
+            <span className={temInsignia(person) ? `mt-tag-time mt-insignia--${mitologia(person)}` : ''}>
+              {temInsignia(person) && <i aria-hidden="true" dangerouslySetInnerHTML={{ __html: svgInsignia(person) }} />}
+              {person.staff ? 'STAFF' : `Time ${person.time}`}{!person.staff && mitologia(person) ? ` · ${nomeMitologia[mitologia(person)]}` : ''}
+            </span>
+          )}
         </div>
         <div className="mt-actions">
           <button type="button" className="vq-primary" disabled={disabled} onClick={() => onDone(person)}>Sou eu, começar<KeyIcon name="ok" /></button>
