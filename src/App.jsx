@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import VitaminQuiz from './components/VitaminQuiz'
 import SettingsPanel, { GearIcon, RestartIcon } from './components/SettingsPanel'
 import { buildProducts, getQuizRecommendation, quizQuestions, resolveQuestions } from './quiz/recommendation'
+import { faixaEtaria } from './quiz/perguntas'
 import { htmlCupomQuiz } from './print/cupom'
 
 // Cada janela do Electron é um processo próprio com o seu quiz: as telas não compartilham estado.
@@ -13,6 +14,12 @@ const fallbackConfig = { inatividadeSegundos: 60 }
 
 const lookupPerson = api?.lookupPerson ? (matricula) => api.lookupPerson(matricula) : undefined
 
+// Com a idade no cadastro do CONECTA, a faixa vem pronta e a pergunta de idade não aparece.
+const fixedAnswers = (pessoa) => {
+  const age = faixaEtaria(pessoa?.idade)
+  return age ? { age } : {}
+}
+
 // Grava a resposta e imprime o cupom (sugestão principal + 2). Devolve o resultado da impressão.
 const finishQuiz = (answers, sessionId, pessoa) => {
   const result = getQuizRecommendation(products, answers)
@@ -21,6 +28,7 @@ const finishQuiz = (answers, sessionId, pessoa) => {
     sessionId,
     pessoa: pessoa || {},
     answers,
+    ageSource: fixedAnswers(pessoa).age ? 'matricula' : answers.age ? 'resposta' : '',
     profileId: result.profileId,
     productName: result.product?.name,
     alternatives: result.alternatives.map((product) => product.name),
@@ -69,6 +77,7 @@ export default function App() {
         recommend={getQuizRecommendation}
         onComplete={finishQuiz}
         lookupPerson={lookupPerson}
+        fixedAnswers={fixedAnswers}
         onActiveChange={reportActive}
         idleResetMs={config.inatividadeSegundos * 1000}
       />

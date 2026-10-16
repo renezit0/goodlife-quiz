@@ -27,6 +27,10 @@ uma em cada tela.
 - Depois de "INICIAR JÁ", o quiz pede a **matrícula** num teclado numérico na tela (um teclado USB
   também funciona). Achando a pessoa, mostra "Olá, Fulano!" com loja e time para ela confirmar.
   Se a matrícula não estiver na lista, dá para seguir assim mesmo.
+- **Idade pela matrícula:** a lista da API do CONECTA traz a idade de cada pessoa (calculada da data
+  de nascimento do cadastro; a data em si não sai da API). Com a idade, o quiz **pula a pergunta de
+  idade** e usa a faixa certa. Sem idade no cadastro, ou com uma matrícula que não está na lista,
+  a pergunta aparece normalmente. O CSV tem a coluna `idade_fonte` (`matricula` ou `resposta`).
 - Ao terminar, o app **imprime um cupom** na térmica de 80 mm (silencioso, como na pré-venda):
   participante, sugestão GoodLife principal com foto e código, **mais duas sugestões na sequência**,
   perfil e respostas. A tela avisa "Retire seu cupom na impressora".
@@ -135,7 +139,9 @@ não abre outro conjunto de telas.
 - `electron/preload.cjs` — ponte segura entre o quiz e o processo principal.
 - `src/components/VitaminQuiz.jsx` — o quiz (mesmo componente do site, com volta automática).
 - `src/components/SettingsPanel.jsx` — engrenagem, painel de configurações e teclado da senha.
-- `src/quiz/perguntas.js` — as 8 perguntas; a 5ª muda conforme o objetivo escolhido.
+- `src/quiz/perguntas.js` — as perguntas (5 a 7, conforme as respostas): objetivo, detalhe que muda
+  conforme o objetivo, perfil, idade (pulada quando vem da matrícula), movimento, rotina e sono
+  (pulado quando o objetivo é sono). Opções que repetiriam uma resposta anterior somem sozinhas.
 - `src/quiz/evento.js` — os 22 produtos do evento e a ficha de benefícios de cada um.
 - `src/quiz/recommendation.js` — necessidades por resposta, sugestão principal + 2 complementares e o motivo de cada uma.
 - `src/assets/produtos/` — fotos dos produtos; o nome do arquivo define o produto.

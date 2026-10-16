@@ -173,13 +173,6 @@ const extractProductCode = (slug) => {
 // das respostas que mais pesaram para ela.
 
 const needsByAnswer = {
-  symptom: {
-    fatigue: { energia: 4, base: 1 },
-    immunity: { imunidade: 4, respiratorio: 2 },
-    sleep: { sono: 4, estresse: 1 },
-    food: { base: 4, imunidade: 1 },
-    beauty: { beleza: 5 },
-  },
   age: {
     '18-29': { energia: 1 },
     '30-44': { base: 1, estresse: 1 },
@@ -194,6 +187,7 @@ const needsByAnswer = {
     beleza: { beleza: 5 },
     ossos: { ossos: 4, muscular: 1.5 },
     mente: { mente: 5 },
+    base: { base: 5, imunidade: 1 },
   },
   // Pergunta adaptativa (depende do objetivo): afina a necessidade principal.
   focus: {
@@ -221,6 +215,10 @@ const needsByAnswer = {
     'mente-foco': { memoria: 2, energia: 1, estresse: 1 },
     'mente-coracao': { coracao: 4 },
     'mente-olhos': { visao: 4 },
+    'base-pulo': { base: 3, energia: 1 },
+    'base-pouca': { base: 2, imunidade: 1 },
+    'base-bem': { base: 1 },
+    // "Nenhum desses" não soma nada: vale o objetivo escolhido.
   },
   activity: {
     sedentary: { base: 1 },
@@ -231,8 +229,8 @@ const needsByAnswer = {
     rush: { base: 3, energia: 1 },
     stress: { estresse: 3, mente: 1, sono: 1 },
     screens: { visao: 3, memoria: 1 },
-    seasonal: { imunidade: 3, respiratorio: 3 },
-    aesthetic: { beleza: 3 },
+    sun: { sol: 3, imunidade: 1 },
+    none: {},
   },
   sleep: {
     good: {},
@@ -304,11 +302,14 @@ function answersBehind(need, answers, questions) {
     .map((question) => {
       const weight = needsByAnswer[question.id]?.[answers[question.id]]?.[need] || 0
       const option = question.options.find((item) => item.id === answers[question.id])
-      return { weight, label: option?.label }
+      return { need, weight, label: option?.reasonLabel || option?.label, questionId: question.id, optionId: option?.id }
     })
     .filter(({ weight, label }) => weight >= 1 && label)
     .sort((a, b) => b.weight - a.weight)
 }
+
+// A idade pode ter vindo do cadastro (matrícula), então não entra como "Você marcou".
+const ageText = { '18-29': 'tem de 18 a 29 anos', '30-44': 'tem de 30 a 44 anos', '45-59': 'tem de 45 a 59 anos', '60+': 'tem 60 anos ou mais' }
 
 function reasonFor(scored, answers, questions) {
   const ranked = [...scored.contributions].sort((a, b) => b[1] - a[1])
@@ -316,27 +317,30 @@ function reasonFor(scored, answers, questions) {
   // Só necessidades que pesaram de verdade (30%+ da principal) e, de preferência, respostas
   // com peso 2 ou mais: evita motivos fracos como a faixa de idade puxando "energia".
   const strongNeeds = ranked.filter(([, value]) => value >= (ranked[0]?.[1] || 0) * 0.3).slice(0, 2)
-  const behind = strongNeeds.flatMap(([need]) => answersBehind(need, answers, questions))
+  const behind = strongNeeds.flatMap(([need]) => answersBehind(need, answers, questions)).filter(({ questionId }) => questionId !== 'age')
   const strong = behind.filter(({ weight }) => weight >= 2)
-  const labels = []
+  const picked = []
   // A resposta da pergunta de detalhe vem primeiro quando o produto atende a ela de verdade.
   const focusQuestion = questions.find((q) => q.id === 'focus')
   const focusOption = focusQuestion?.options.find((o) => o.id === answers.focus)
   const focusNeed = Object.entries(needsByAnswer.focus[answers.focus] || {}).sort((a, b) => b[1] - a[1])[0]?.[0]
   const ledByFocus = Boolean(focusOption) && (scored.product.beneficios?.[focusNeed] || 0) >= 3
-  if (ledByFocus) labels.push(focusOption.label)
-  for (const { label } of strong.length ? strong : behind) {
-    if (!labels.includes(label) && labels.length < 2) labels.push(label)
+  if (ledByFocus) picked.push({ need: focusNeed, label: focusOption.label })
+  for (const item of strong.length ? strong : behind) {
+    if (!picked.some(({ label }) => label === item.label) && picked.length < 2) picked.push(item)
   }
-  const ageLabel = questions.find((q) => q.id === 'age')?.options.find((o) => o.id === answers.age)?.label
+  const labels = picked.map(({ label }) => label)
   if (scored.product.publico === 'mulher') labels.push('Mulher')
-  if (scored.product.publico === '50+' && !labels.includes(ageLabel)) labels.push(ageLabel)
-  const quoted = labels.filter(Boolean).slice(0, 3).map((label) => `“${label}”`)
-  const joined = quoted.length > 1 ? `${quoted.slice(0, -1).join(', ')} e ${quoted.at(-1)}` : quoted[0]
-  const headNeed = ledByFocus ? focusNeed : mainNeed
+  const quoted = labels.slice(0, 3).map((label) => `“${label}”`)
+  const age = scored.product.publico === '50+' ? ageText[answers.age] : null
+  const joined = age || quoted.length < 2 ? quoted.join(', ') : `${quoted.slice(0, -1).join(', ')} e ${quoted.at(-1)}`
+  // O benefício citado é o da primeira resposta citada, para o motivo não misturar assuntos.
+  const headNeed = picked[0]?.need || mainNeed
+  const benefit = `ajuda a ${needProfiles[headNeed]?.focus || 'cuidar da sua rotina'}`
+  const lead = joined && age ? `Você marcou ${joined} e ${age}` : joined ? `Você marcou ${joined}` : age ? `Você ${age}` : ''
   return {
     need: headNeed,
-    text: joined ? `Você marcou ${joined}: ajuda a ${needProfiles[headNeed]?.focus || 'cuidar da sua rotina'}.` : `Ajuda a ${needProfiles[headNeed]?.focus || 'cuidar da sua rotina'}.`,
+    text: lead ? `${lead}: ${benefit}.` : `${benefit.charAt(0).toUpperCase()}${benefit.slice(1)}.`,
   }
 }
 
@@ -347,7 +351,7 @@ export const getQuizRecommendation = (products, answers) => {
     .filter(Boolean)
     .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, 'pt-BR'))
 
-  // A principal respeita o objetivo que a pessoa escolheu ("O que você quer cuidar primeiro?"):
+  // A principal respeita o objetivo que a pessoa escolheu ("O que você mais quer cuidar hoje?"):
   // só entram produtos fortes nesse objetivo (nota 3+ na ficha), se houver algum.
   // O detalhe da pergunta adaptativa (ex.: "Olhos cansados de tela") tem prioridade sobre o
   // objetivo geral ("Coração e cérebro").

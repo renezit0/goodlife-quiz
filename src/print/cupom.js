@@ -28,7 +28,8 @@ export function htmlCupomQuiz({ pessoa, result, answers, questions, screen, sess
 
   const answersHtml = questions.map((question) => {
     const option = question.options.find((item) => item.id === answers[question.id])
-    return option ? `<li>${escapeHtml(option.label)}</li>` : ''
+    // "Nenhum desses" não diz nada fora da tela da pergunta: fica fora do cupom.
+    return option && option.icon !== 'none' ? `<li>${escapeHtml(option.reasonLabel || option.label)}</li>` : ''
   }).join('')
 
   const pessoaHtml = pessoa?.matricula ? `

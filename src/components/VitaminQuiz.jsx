@@ -31,13 +31,16 @@ function Icon({ name, className = '' }) {
     shield: <path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" />,
     clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
     reset: <><path d="M3 10a9 9 0 1 1 2 8M3 4v6h6" /></>,
+    none: <><circle cx="12" cy="12" r="8" /><path d="m6.5 17.5 11-11" /></>,
   }
   return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.spark}</svg>
 }
 
 // lookupPerson: quando informado, o quiz começa pedindo a matrícula do participante.
 // onComplete(answers, sessionId, pessoa) pode devolver uma promessa { ok } da impressão do cupom.
-export default function VitaminQuiz({ questions: questionList, resolveQuestions, products, recommend, onComplete, onActiveChange, lookupPerson, idleResetMs = 0 }) {
+// fixedAnswers(pessoa): respostas que já vêm do cadastro (a idade, pela matrícula); a pergunta
+// delas não aparece.
+export default function VitaminQuiz({ questions: questionList, resolveQuestions, products, recommend, onComplete, onActiveChange, lookupPerson, fixedAnswers, idleResetMs = 0 }) {
   const [started, setStarted] = useState(false)
   const [pessoa, setPessoa] = useState(null)
   const [printState, setPrintState] = useState(null) // null | printing | done | failed
@@ -54,12 +57,14 @@ export default function VitaminQuiz({ questions: questionList, resolveQuestions,
   // Identifica cada rodada do quiz; "Revisar respostas" mantém a mesma sessão.
   const sessionRef = useRef(null)
   const newSession = () => { sessionRef.current = crypto.randomUUID().slice(0, 8) }
+  const fixed = useMemo(() => fixedAnswers?.(pessoa) || {}, [fixedAnswers, pessoa])
   // Perguntas adaptativas: as opções de uma pergunta podem depender de uma resposta anterior.
-  const questions = useMemo(() => (resolveQuestions ? resolveQuestions(answers, questionList) : questionList), [answers, questionList, resolveQuestions])
-  const complete = step === questions.length
+  const resolve = (given) => (resolveQuestions ? resolveQuestions({ ...given, ...fixed }, questionList, fixed) : questionList)
+  const questions = useMemo(() => resolve(answers), [answers, fixed, questionList, resolveQuestions]) // eslint-disable-line react-hooks/exhaustive-deps
+  const complete = step >= questions.length
   const question = questions[step]
   const meta = question
-  const result = useMemo(() => complete ? recommend(products, answers) : null, [complete, products, answers, recommend])
+  const result = useMemo(() => complete ? recommend(products, { ...answers, ...fixed }) : null, [complete, products, answers, fixed, recommend])
   const answeredCount = step
   const progress = Math.round(answeredCount / questions.length * 100)
 
@@ -144,8 +149,9 @@ export default function VitaminQuiz({ questions: questionList, resolveQuestions,
     }
     setAnswers(nextAnswers)
     setStep((value) => value + 1)
-    if (step === questions.length - 1) {
-      const printing = onComplete?.(nextAnswers, sessionRef.current, pessoa)
+    // A resposta pode tirar perguntas seguintes (ex.: objetivo sono pula a do sono): conta de novo.
+    if (step + 1 >= resolve(nextAnswers).length) {
+      const printing = onComplete?.({ ...nextAnswers, ...fixed }, sessionRef.current, pessoa)
       if (printing?.then) {
         setPrintState('printing')
         printing.then((result) => setPrintState(result?.ok ? 'done' : result?.desligado ? null : 'failed'))

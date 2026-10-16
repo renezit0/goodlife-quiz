@@ -24,6 +24,10 @@ function readText(file) {
 }
 
 const clean = (value) => String(value ?? '').trim().replace(/\s+/g, ' ')
+const age = (value) => {
+  const years = Number.parseInt(value, 10)
+  return Number.isFinite(years) && years > 0 ? years : null
+}
 
 function person(raw) {
   const matricula = matriculaKey(raw.matricula ?? raw.MAT ?? raw.mat)
@@ -36,6 +40,8 @@ function person(raw) {
     loja: clean(raw.loja_nome ?? raw.LOJA ?? raw.loja),
     lojaNumero: clean(raw.loja_numero ?? ''),
     time: staff ? 'STAFF' : clean(raw.grupo_nome ?? raw.TIME ?? raw.time),
+    // Idade em anos (só a API do CONECTA manda): o quiz pula a pergunta de idade.
+    idade: age(raw.idade),
   }
 }
 
@@ -96,8 +102,27 @@ function load() {
   return { source, people: cache.people }
 }
 
+// Idades da lista baixada da API, para completar a pessoa quando a lista mais recente é outra
+// (ex.: a do CONECTA Check-in, que não tem idade).
+let ageCache = { mtimeMs: 0, ages: {} }
+function apiAges() {
+  try {
+    const { mtimeMs } = fs.statSync(apiFile())
+    if (ageCache.mtimeMs !== mtimeMs) {
+      const people = parse(readText(apiFile()), apiFile())
+      ageCache = { mtimeMs, ages: Object.fromEntries(Object.values(people).filter((p) => p.idade).map((p) => [p.matricula, p.idade])) }
+    }
+  } catch {
+    ageCache = { mtimeMs: 0, ages: {} }
+  }
+  return ageCache.ages
+}
+
 function lookup(matricula) {
-  return load().people[matriculaKey(matricula)] || null
+  const key = matriculaKey(matricula)
+  const found = load().people[key]
+  if (!found) return null
+  return found.idade ? found : { ...found, idade: apiAges()[key] || null }
 }
 
 function info() {
